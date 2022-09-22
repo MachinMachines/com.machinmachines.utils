@@ -98,7 +98,7 @@ namespace MachinMachines
                         }
                         // We always write the file in case the base ScriptableObject gets updated from the code
                         // TODO @gama: decide whether the file or the code is right once and for all!
-                        File.WriteAllText(_instance.SettingsPath, JsonUtility.ToJson(_instance, true));
+                        SerialiseToFile();
 #if UNITY_EDITOR
                         // This is only useful so the file appears immediately in the projet browser
                         AssetDatabase.SaveAssets();
@@ -107,6 +107,11 @@ namespace MachinMachines
                         CreateFolders(_instance);
                     }
                     return _instance;
+                }
+
+                public static void SerialiseToFile()
+                {
+                    File.WriteAllText(_instance.SettingsPath, JsonUtility.ToJson(_instance, true));
                 }
 
                 // Tiny helper for settings marked with the "IsFilepath" attribute:
