@@ -5,6 +5,6 @@
   "unity": "2020.3",
   "description": "MachinMachines utilities : various useful code snippets",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/@G4m4"
+    "registry": "https://npm.pkg.github.com/@MachinMachines"
   }
 }
