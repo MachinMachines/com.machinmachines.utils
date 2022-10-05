@@ -30,11 +30,11 @@ namespace MachinMachines
         {
             static readonly int[] kValues = (int[])System.Enum.GetValues(typeof(T));
             static readonly string[] kNames = System.Enum.GetNames(typeof(T));
+            // Determine if this is a "flag enum" with multiple simultaneous values allowed
+            static readonly bool kIsFlagEnum = System.Attribute.IsDefined(typeof(T).GetTypeInfo(), typeof(System.FlagsAttribute));
 
             public static void Draw(ref T _enum)
             {
-                // Determine if this is a "flag enum" with multiple simultaneous values allowed
-                bool isFlagEnum = System.Attribute.IsDefined(_enum.GetType().GetTypeInfo(), typeof(System.FlagsAttribute));
                 if(!isFlagEnum)
                 {
                     Debug.LogError($"Enum type {_enum.GetType().Name} not supported as it is not a flag.");
