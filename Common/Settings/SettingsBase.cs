@@ -25,6 +25,18 @@ namespace MachinMachines
     {
         namespace Settings
         {
+            // Abstract base class for a class of JSON settings that can be used both in-editor or ingame
+            // There are two behaviour: in-editor, or in-built game ("runtime")
+            // - in editor, if a matching file is found in the project StreamingAssets/ folder, it will be used.
+            // If not found a default settings file is located within the host package (so it holds default values)
+            // - at runtime (packaged/built game) the settings file is located in StreamingAssets/ so the JSON can be edited manually
+            //
+            // During the build process there is a hook to copy from either editor location (project specific StreamingAssets/ or in-package)
+            // to the eventual runtime location (StreamingAssets/)
+            //
+            // Child classes only need to hold the actual settings data and nothing else
+
+
             abstract public class SettingsWithPath : ScriptableObject
             {
 #if UNITY_EDITOR
@@ -32,6 +44,7 @@ namespace MachinMachines
                 // This is public only so it can be used below so do NOT use it!
                 public virtual string PackagePath { get { return Paths.GetPackageRelativePath("com.machinmachines.utils"); } }
                 public string EditorSettingsPath { get { return Path.Combine(PackagePath, _editorSettingsPath); } }
+                public string OverwriteSettingsPath { get { return Path.Combine(Application.streamingAssetsPath, _editorSettingsPath); } }
 #endif  // UNITY_EDITOR
 
                 public string SettingsPath
@@ -39,7 +52,14 @@ namespace MachinMachines
                     get
                     {
 #if UNITY_EDITOR
-                        return EditorSettingsPath;
+                        if (File.Exists(OverwriteSettingsPath))
+                        {
+                            return OverwriteSettingsPath;
+                        }
+                        else
+                        {
+                            return EditorSettingsPath;
+                        }
 #else
                         return RuntimeSettingsPath;
 #endif  // UNITY_EDITOR
@@ -52,17 +72,13 @@ namespace MachinMachines
                 internal string _runtimeSettingsPath = "";
             }
 
-            // Abstract base class for a class of JSON settings that can be used both in-editor or ingame
-            // Stored in Streaming Assets so the JSON can be edited manually later on
-            //
-            // This way, child classes only need to hold the actual settings data and nothing else
-            //
-            // IMPORTANT: paths in those settings have to be well-formed if they are being used "as is"
+            // IMPORTANT: paths fields in the children settings classes have to be well-formed if they are being used "as is"
             // For instance this would work on Linux, not on Windows:
             // MbxpFolder = "X:/03_ASSETS/07_TEXTURES/MBXP";
             // But this would work anywhere as it is using platform-specific API to fix the path:
             // Path.GetFullPath(MbxpFolder)
             // So beware! There is a tringlerie de l'enfer(tm) to make sure that no full absolute paths are stored in settings
+
             abstract public class SettingsBase<T> : SettingsWithPath where T : SettingsWithPath
             {
                 // All settings are stored in the same folder, with the file named after their class
@@ -108,6 +124,21 @@ namespace MachinMachines
                     }
                     return _instance;
                 }
+
+#if UNITY_EDITOR
+                // Simple helper to be called from children classes to easily create a local version of the settings file
+                static protected void CreateOverrideFile()
+                {
+                    string overwritePathDirectory = Path.GetDirectoryName(_instance.OverwriteSettingsPath);
+                    if(!Directory.Exists(overwritePathDirectory))
+                    {
+                        Directory.CreateDirectory(overwritePathDirectory);
+                    }
+                    File.Copy(_instance.EditorSettingsPath, _instance.OverwriteSettingsPath, true);
+                    // Make sure to reset the instance
+                    _instance = null;
+                }
+#endif  // UNITY_EDITOR
 
                 public static void SerialiseToFile()
                 {
