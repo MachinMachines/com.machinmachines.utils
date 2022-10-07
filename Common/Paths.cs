@@ -32,7 +32,7 @@ namespace MachinMachines
                     {
                         return true;
                     }
-                    return NormalisePath(lhs).Equals(NormalisePath(rhs));
+                    return NormalisePath(lhs).Equals(NormalisePath(rhs), StringComparison.OrdinalIgnoreCase);
                 }
 
                 public int GetHashCode(string obj)
