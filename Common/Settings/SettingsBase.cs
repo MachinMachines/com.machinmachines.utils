@@ -44,7 +44,7 @@ namespace MachinMachines
                 // This is public only so it can be used below so do NOT use it!
                 public virtual string PackagePath { get { return Paths.GetPackageRelativePath("com.machinmachines.utils"); } }
                 public string EditorSettingsPath { get { return Path.Combine(PackagePath, _editorSettingsPath); } }
-                public string OverwriteSettingsPath { get { return Path.Combine(Application.streamingAssetsPath, _editorSettingsPath); } }
+                public string OverwriteSettingsPath { get { return _editorSettingsPath; } }
 #endif  // UNITY_EDITOR
 
                 public string SettingsPath
@@ -81,14 +81,15 @@ namespace MachinMachines
 
             abstract public class SettingsBase<T> : SettingsWithPath where T : SettingsWithPath
             {
+                protected const string kSubFolderName = "Settings";
                 // All settings are stored in the same folder, with the file named after their class
                 // In editor we read the local folder, at runtime it's in StreamingAssets
                 protected static readonly string kRuntimeSettingsPath = Path.Combine(Application.streamingAssetsPath,
-                                                                                 "Settings",
-                                                                                 $"{typeof(T).Name}.json");
+                                                                                     kSubFolderName,
+                                                                                     $"{typeof(T).Name}.json");
                 protected static readonly string kEditorSettingsPath = Path.Combine("Assets",
-                                                                                    "Settings",
-                                                                                    $"{typeof(T).Name}.json");
+                                                                                    kSubFolderName,
+                                                                                     $"{typeof(T).Name}.json");
 
                 internal static T _instance = null;
 
@@ -130,7 +131,7 @@ namespace MachinMachines
                 static protected void CreateOverrideFile()
                 {
                     string overwritePathDirectory = Path.GetDirectoryName(_instance.OverwriteSettingsPath);
-                    if(!Directory.Exists(overwritePathDirectory))
+                    if (!Directory.Exists(overwritePathDirectory))
                     {
                         Directory.CreateDirectory(overwritePathDirectory);
                     }
