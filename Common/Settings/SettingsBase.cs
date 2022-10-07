@@ -118,7 +118,7 @@ namespace MachinMachines
 #if UNITY_EDITOR
                         // This is only useful so the file appears immediately in the projet browser
                         AssetDatabase.SaveAssets();
-                        AssetDatabase.Refresh();
+                        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 #endif  // UNITY_EDITOR
                         CreateFolders(_instance);
                     }
