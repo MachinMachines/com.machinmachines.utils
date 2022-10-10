@@ -138,6 +138,24 @@ namespace MachinMachines
                 return null;
             }
 #endif  // UNITY_EDITOR
+
+            // Given two sets of files, "reconcile" them similarly to P4 reconcile:
+            // - identify files present in both sets ("similar")
+            // - identify files present in the set to be reconciled with only ("added")
+            // - identify files present in the existing set only ("removed")
+            public static void ReconcileFiles(IEnumerable<string> existingSet,
+                                              IEnumerable<string> toReconcileWithSet,
+                                              out HashSet<string> similarSet,
+                                              out HashSet<string> addedSet,
+                                              out HashSet<string> removedSet)
+            {
+                similarSet = new HashSet<string>(toReconcileWithSet);
+                addedSet = new HashSet<string>(toReconcileWithSet);
+                removedSet = new HashSet<string>(existingSet);
+                similarSet.IntersectWith(existingSet);
+                addedSet.ExceptWith(similarSet);
+                removedSet.ExceptWith(similarSet);
+            }
         }
     }
 }
