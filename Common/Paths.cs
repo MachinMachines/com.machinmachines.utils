@@ -156,6 +156,32 @@ namespace MachinMachines
                 addedSet.ExceptWith(similarSet);
                 removedSet.ExceptWith(similarSet);
             }
+
+            // For a given path,
+            // get all parent directories (from innermost to outermost) until the given root is met
+            public static IEnumerable<string> GetParentDirectories(string path, string rootPath)
+            {
+                List<string> result = new List<string>();
+                string current = Path.GetDirectoryName(path);
+                while (!string.IsNullOrEmpty(current) && !Paths.PathsAreEquivalent(current, rootPath))
+                {
+                    result.Add(current);
+                    current = Path.GetDirectoryName(current);
+                }
+                return result;
+            }
+
+            // For multiple input paths,
+            // get all parent directories (from innermost to outermost) until the given root is met
+            public static IEnumerable<string> GetParentDirectories(IEnumerable<string> paths, string pathRoot)
+            {
+                HashSet<string> parentDirectories = new HashSet<string>();
+                foreach (string path in paths)
+                {
+                    parentDirectories.UnionWith(Paths.GetParentDirectories(path, pathRoot));
+                }
+                return parentDirectories;
+            }
         }
     }
 }
