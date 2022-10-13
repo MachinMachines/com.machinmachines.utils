@@ -35,10 +35,9 @@ namespace MachinMachines
                 {Unit.Gigabyte, "GB" }
             };
 
-            public const float BYTE_CAPACITY = 1024.0f;
-            public const float BYTE_LIMIT = BYTE_CAPACITY;
-            public const float KILOBYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY;
-            public const float MEGABYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY * BYTE_CAPACITY;
+            private const float BYTE_CAPACITY = 1024.0f;
+            private const float KILOBYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY;
+            private const float MEGABYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY * BYTE_CAPACITY;
 
             public static string DisplayByteSize(float bytes, int nbDecimals = 0)
             {
@@ -64,17 +63,17 @@ namespace MachinMachines
                 return value.ToString(precision) + s_UnitToSuffix[unit];
             }
 
-            public static float ConvertInKb(float bytes)
+            private static float ConvertInKb(float bytes)
             {
                 return bytes / BYTE_CAPACITY;
             }
 
-            public static float ConvertInMb(float bytes)
+            private static float ConvertInMb(float bytes)
             {
                 return ConvertInKb(bytes) / BYTE_CAPACITY;
             }
 
-            public static float ConvertInGb(float bytes)
+            private static float ConvertInGb(float bytes)
             {
                 return ConvertInMb(bytes) / BYTE_CAPACITY;
             }

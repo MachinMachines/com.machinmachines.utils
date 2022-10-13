@@ -21,16 +21,10 @@ namespace MachinMachines
     namespace Utils
     {
         // Useful to annotate integer values representing a memory size
-        // Has a custom drawer displaying the size in the annotated unit
+        // Has a custom drawer displaying the size in the proper unit
         [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
         public class IsMemorySizeUnitAttribute : PropertyAttribute
         {
-            public readonly MemorySizeUnit.Unit Unit;
-
-            public IsMemorySizeUnitAttribute(MemorySizeUnit.Unit unit)
-            {
-                Unit = unit;
-            }
         }
     }
 }
