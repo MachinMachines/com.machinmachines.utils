@@ -29,7 +29,7 @@ namespace MachinMachines
             }
 
             public static Dictionary<Unit, string> s_UnitToSuffix = new Dictionary<Unit, string> {
-                {Unit.Byte, "b" },
+                {Unit.Byte, "B" },
                 {Unit.Kilobyte, "KB" },
                 {Unit.Megabyte, "MB" },
                 {Unit.Gigabyte, "GB" }
@@ -45,20 +45,23 @@ namespace MachinMachines
                 // Default on bytes
                 float value = bytes;
                 Unit unit = Unit.Byte;
-                if (bytes < KILOBYTE_LIMIT)
+                if (bytes > BYTE_CAPACITY)
                 {
-                    value = ConvertInKb(bytes);
-                    unit = Unit.Kilobyte;
-                }
-                else if (bytes < MEGABYTE_LIMIT)
-                {
-                    value = ConvertInMb(bytes);
-                    unit = Unit.Megabyte;
-                }
-                else
-                {
-                    value = ConvertInGb(bytes);
-                    unit = Unit.Gigabyte;
+                    if (bytes < KILOBYTE_LIMIT)
+                    {
+                        value = ConvertInKb(bytes);
+                        unit = Unit.Kilobyte;
+                    }
+                    else if (bytes < MEGABYTE_LIMIT)
+                    {
+                        value = ConvertInMb(bytes);
+                        unit = Unit.Megabyte;
+                    }
+                    else
+                    {
+                        value = ConvertInGb(bytes);
+                        unit = Unit.Gigabyte;
+                    }
                 }
                 return value.ToString(precision) + s_UnitToSuffix[unit];
             }
