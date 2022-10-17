@@ -116,16 +116,24 @@ namespace MachinMachines
 #if UNITY_EDITOR
             // Inspired from TextMesh Pro similar function
             // No runtime version!
-            public static string GetPackageRelativePath(string packageFullName)
+            public static string GetPackagePath(string packageFullName, bool fullPath)
             {
                 // Check for potential UPM package
-                string packagePath = Path.GetFullPath($"Packages/{packageFullName}");
+                string packagePath = $"Packages/{packageFullName}";
+                if (fullPath)
+                {
+                    packagePath = Path.GetFullPath(packagePath);
+                }
                 if (Directory.Exists(packagePath))
                 {
                     return packagePath;
                 }
 
-                packagePath = Path.GetFullPath("Assets/..");
+                packagePath = "Assets/..";
+                if (fullPath)
+                {
+                    packagePath = Path.GetFullPath(packagePath);
+                }
                 if (Directory.Exists(packagePath))
                 {
                     // Search default location for development package

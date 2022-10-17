@@ -42,7 +42,7 @@ namespace MachinMachines
 #if UNITY_EDITOR
                 // Override this property in the child class if it is defined in another package
                 // This is public only so it can be used below so do NOT use it!
-                public virtual string PackagePath { get { return Paths.GetPackageRelativePath("com.machinmachines.utils"); } }
+                public virtual string PackagePath { get { return Paths.GetPackagePath("com.machinmachines.utils", false); } }
                 public string EditorSettingsPath { get { return Path.Combine(PackagePath, _editorSettingsPath); } }
                 public string OverwriteSettingsPath { get { return _editorSettingsPath; } }
 #endif  // UNITY_EDITOR
