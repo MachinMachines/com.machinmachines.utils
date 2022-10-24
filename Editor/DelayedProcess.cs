@@ -23,10 +23,12 @@ namespace MachinMachines
             // Push a new item to be post processed later on
             static public void Push(T item)
             {
-                if (onNextUpdate.Method == null)
+                if (onNextUpdate == null || onNextUpdate.Method == null)
                 {
                     // if you end up here, you forgot to set the callback method!
-                    Debug.LogError($"Forgot to set post-import method for ImportPayload<{typeof(T).Name}>");
+                    string errorMessage = $"Forgot to set post-import method for ImportPayload<{typeof(T).Name}>";
+                    // It has to be an exception to make sure everything stops here
+                    throw new Exception(errorMessage);
                 }
                 // Setup all post-import steps
                 lock (PendingAssets)
