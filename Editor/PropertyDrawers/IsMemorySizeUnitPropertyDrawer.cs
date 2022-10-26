@@ -31,7 +31,7 @@ namespace MachinMachines
                 EditorGUI.BeginDisabledGroup(true);
                 using (new GUILayout.HorizontalScope())
                 {
-                    string valueDisplay = MemorySizeUnit.DisplayByteSize(property.intValue, 1);
+                    string valueDisplay = MemorySizeUnit.DisplayByteSize(property.longValue, 1);
                     Rect labelRect = new Rect(position.x, position.y, position.width / 4, position.height);
                     EditorGUI.LabelField(labelRect, label);
                     Rect valueRect = new Rect(position.x + position.width / 4, position.y, position.width / 4, position.height);

@@ -39,7 +39,7 @@ namespace MachinMachines
             private const float KILOBYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY;
             private const float MEGABYTE_LIMIT = BYTE_CAPACITY * BYTE_CAPACITY * BYTE_CAPACITY;
 
-            public static string DisplayByteSize(float bytes, int nbDecimals = 0)
+            public static string DisplayByteSize(long bytes, int nbDecimals = 0)
             {
                 string precision = "F" + nbDecimals;
                 // Default on bytes
