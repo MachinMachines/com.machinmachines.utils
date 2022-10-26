@@ -176,18 +176,22 @@ namespace MachinMachines
             public void WriteAtPath(string filepath)
             {
                 string packageStr = JsonUtility.ToJson(this, true);
-                // Remove the last line after checking it
-                List<string> lines = packageStr.Split('\n').ToList();
-                for (int i = lines.Count - 1; i > 0; --i)
+                string actualPackageStr = packageStr;
+                if (Dependencies.Length > 0)
                 {
-                    if (kClosingBracketRegex.Match(lines[i]).Success)
+                    // Remove the last line after checking it
+                    List<string> lines = packageStr.Split('\n').ToList();
+                    for (int i = lines.Count - 1; i > 0; --i)
                     {
-                        // This is where we can insert the dependencies data
-                        lines[i - 1] += ',';
-                        lines.Insert(i, dependencies);
+                        if (kClosingBracketRegex.Match(lines[i]).Success)
+                        {
+                            // This is where we can insert the dependencies data
+                            lines[i - 1] += ',';
+                            lines.Insert(i, dependencies);
+                        }
                     }
+                    actualPackageStr = string.Join('\n', lines);
                 }
-                string actualPackageStr = string.Join('\n', lines);
                 File.WriteAllText(filepath, actualPackageStr);
             }
         }
