@@ -27,24 +27,36 @@ namespace MachinMachines
     {
         public class HierarchicalTreeItem
         {
+            public string DisplayName
+            {
+                get
+                {
+                    return GameObject != null ? GameObject.name : Data;
+                }
+            }
             public GameObject GameObject;
+            public GameObject Parent;
+            public string Data;
+            public bool Flag;
             public int Depth;
             public HashSet<HierarchicalTreeItem> Children;
         }
+
         public class HierarchicalTreeItemComparer : IEqualityComparer<HierarchicalTreeItem>
         {
             public bool Equals(HierarchicalTreeItem x, HierarchicalTreeItem y)
             {
-                return x.GameObject.Equals(y.GameObject);
+                return x.DisplayName.Equals(y.DisplayName);
             }
 
             public int GetHashCode(HierarchicalTreeItem obj)
             {
-                return obj.GameObject.GetHashCode();
+                return obj.DisplayName.GetHashCode();
             }
         }
 
-        public class HierarchicalTree {
+        public class HierarchicalTree
+        {
             public HierarchicalTreeItem Root;
 
             public IEnumerable<HierarchicalTreeItem> Content
@@ -57,20 +69,21 @@ namespace MachinMachines
 
             public void Clear(GameObject root)
             {
-                Root = new HierarchicalTreeItem { GameObject = root, Depth = 0, Children = new HashSet<HierarchicalTreeItem>(new HierarchicalTreeItemComparer()) };
+                Root = new HierarchicalTreeItem { GameObject = root, Parent = null, Depth = 0, Children = new HashSet<HierarchicalTreeItem>(new HierarchicalTreeItemComparer()) };
             }
 
             public void Add(IEnumerable<GameObject> parentHierarchy)
             {
                 GameObject current = parentHierarchy.FirstOrDefault();
-                foreach (GameObject child in parentHierarchy.Skip(1))
+                foreach (GameObject child in parentHierarchy.Skip(1).SkipLast(1))
                 {
-                    Add(child, current);
+                    Add(child, current, false);
                     current = child;
                 }
+                Add(parentHierarchy.Last(), current, true);
             }
 
-            private void Add(GameObject go, GameObject parent)
+            public void Add(string data, GameObject parent)
             {
                 HierarchicalTreeItem found = Root;
                 foreach (HierarchicalTreeItem item in Content)
@@ -81,7 +94,21 @@ namespace MachinMachines
                         break;
                     }
                 }
-                found.Children.Add(new HierarchicalTreeItem { GameObject = go, Depth = found.Depth + 1, Children = new HashSet<HierarchicalTreeItem>(new HierarchicalTreeItemComparer()) });
+                found.Children.Add(new HierarchicalTreeItem { Data = data, Parent = parent, Flag = true, Depth = found.Depth + 1, Children = new HashSet<HierarchicalTreeItem>(new HierarchicalTreeItemComparer()) });
+            }
+
+            private void Add(GameObject go, GameObject parent, bool flag)
+            {
+                HierarchicalTreeItem found = Root;
+                foreach (HierarchicalTreeItem item in Content)
+                {
+                    if (item.GameObject == parent)
+                    {
+                        found = item;
+                        break;
+                    }
+                }
+                found.Children.Add(new HierarchicalTreeItem { GameObject = go, Parent = parent, Flag = flag, Depth = found.Depth + 1, Children = new HashSet<HierarchicalTreeItem>(new HierarchicalTreeItemComparer()) });
             }
 
             private IEnumerable<HierarchicalTreeItem> Browse_r(HierarchicalTreeItem start)
@@ -124,7 +151,8 @@ namespace MachinMachines
             private Vector2 _typeScrollPos;
             private HashSet<Type> _checkedCpntTypes = new HashSet<Type>();
             private IEnumerable<Type> _filteredTypes = new Type[0];
-            private HierarchicalTree _hierarchy = new HierarchicalTree();
+            private HierarchicalTree _lhsHierarchy = new HierarchicalTree();
+            private HierarchicalTree _rhsHierarchy = new HierarchicalTree();
 
             [MenuItem("MachinMachines/Utils/ComponentCloner")]
             static void Init()
@@ -173,7 +201,7 @@ namespace MachinMachines
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    _hierarchy.Clear(_lhsGO);
+                    _lhsHierarchy.Clear(_lhsGO);
                     // List all children GO holding the selected types, in the hierarchical order
                     foreach (Type cpntType in _checkedCpntTypes)
                     {
@@ -183,33 +211,79 @@ namespace MachinMachines
                             if (cpnt != null)
                             {
                                 IEnumerable<GameObject> parentHierarchy = GameObjectHierarchy.BrowseParentHierarchy(item, null).Reverse();
-                                _hierarchy.Add(parentHierarchy);
+                                _lhsHierarchy.Add(parentHierarchy);
                             }
                         }
                     }
-                }
-                using (GUILayout.ScrollViewScope scrollScope = new GUILayout.ScrollViewScope(_typeScrollPos))
-                {
-                    EditorGUILayout.LabelField(_lhsGO != null ? _lhsGO.name : "");
-                    EditorGUI.indentLevel += 1;
-                    using (new EditorGUI.DisabledScope(true))
+                    if (_rhsGO != null)
                     {
-                        foreach (HierarchicalTreeItem item in _hierarchy.Content)
+                        _rhsHierarchy.Clear(_rhsGO);
+                        foreach (HierarchicalTreeItem lhsItem in _lhsHierarchy.Content)
                         {
-                            EditorGUI.indentLevel += item.Depth;
-                            GUIStyle labelStyle = EditorStyles.label;
-                            if(item.Children.Count == 0)
+                            if (lhsItem.Flag)
                             {
-                                labelStyle = EditorStyles.boldLabel;
+                                foreach (GameObject rhsItem in GameObjectHierarchy.BrowseChildHierarchy(_rhsGO))
+                                {
+                                    if (lhsItem.Parent.name == rhsItem.name)
+                                    {
+                                        IEnumerable<GameObject> parentHierarchy = GameObjectHierarchy.BrowseParentHierarchy(rhsItem, null).Reverse();
+                                        _rhsHierarchy.Add(parentHierarchy);
+                                        // Add missing element!
+                                        _rhsHierarchy.Add(lhsItem.DisplayName, parentHierarchy.Last());
+                                    }
+                                }
                             }
-                            EditorGUILayout.LabelField(item.GameObject.name, labelStyle);
-                            EditorGUI.indentLevel -= item.Depth;
                         }
                     }
-                    EditorGUI.indentLevel -= 1;
-                    _typeScrollPos = scrollScope.scrollPosition;
                 }
+                using (new GUILayout.HorizontalScope())
+                {
+                    using (GUILayout.ScrollViewScope scrollScope = new GUILayout.ScrollViewScope(_typeScrollPos))
+                    {
+                        EditorGUI.indentLevel += 1;
+                        using (new GUILayout.VerticalScope())
+                        {
+                            using (new EditorGUI.DisabledScope(true))
+                            {
+                                foreach (HierarchicalTreeItem item in _lhsHierarchy.Content)
+                                {
+                                    EditorGUI.indentLevel += item.Depth;
+                                    GUIStyle labelStyle = EditorStyles.label;
+                                    if (item.Children.Count == 0)
+                                    {
+                                        labelStyle = EditorStyles.boldLabel;
+                                    }
+                                    EditorGUILayout.LabelField(item.GameObject.name, labelStyle);
+                                    EditorGUI.indentLevel -= item.Depth;
+                                }
+                            }
+                        }
+                        EditorGUI.indentLevel -= 1;
+                        _typeScrollPos = scrollScope.scrollPosition;
+                    }
 
+                    bool canBeCloned = _checkedCpntTypes.Count > 0 && _rhsGO != null;
+                    using (new EditorGUI.DisabledScope(!canBeCloned))
+                    {
+                        using (new GUILayout.VerticalScope())
+                        {
+                            using (new EditorGUI.DisabledScope(true))
+                            {
+                                foreach (HierarchicalTreeItem item in _rhsHierarchy.Content)
+                                {
+                                    EditorGUI.indentLevel += item.Depth;
+                                    GUIStyle labelStyle = EditorStyles.label;
+                                    if (item.Flag)
+                                    {
+                                        labelStyle = EditorStyles.boldLabel;
+                                    }
+                                    EditorGUILayout.LabelField(item.DisplayName, labelStyle);
+                                    EditorGUI.indentLevel -= item.Depth;
+                                }
+                            }
+                        }
+                    }
+                }
                 Profiler.EndSample();
             }
         }
