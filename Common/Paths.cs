@@ -37,7 +37,7 @@ namespace MachinMachines
 
                 public int GetHashCode(string obj)
                 {
-                    return NormalisePath(obj).GetHashCode();
+                    return NormalisePath(obj).ToLower().GetHashCode();
                 }
             }
 
