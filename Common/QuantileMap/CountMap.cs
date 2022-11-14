@@ -87,7 +87,7 @@ namespace MachinMachines
                 {
                     return $">{(int)Math.Pow(2.0, kHigherBucketIndex)}";
                 }
-                return $"{(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)}";
+                return $"Between {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)} and {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex + 1)}";
             }
 
             protected override string GetItemFilePath(string item)
