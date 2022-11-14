@@ -24,13 +24,25 @@ namespace MachinMachines
         // One named bucket
         // This should be abstract but it makes reusing it in the full map below harder without generics
         [Serializable]
-        public class MapBucket
+        public class MapBucket : ISerializationCallbackReceiver
         {
             public string Name;
 
             public virtual void Reset()
             {
                 throw new NotImplementedException();
+            }
+
+            // Optional in child classes
+            public virtual void OnPreSerialise() { }
+
+            public void OnBeforeSerialize()
+            {
+                OnPreSerialise();
+            }
+
+            public void OnAfterDeserialize()
+            {
             }
         }
 

@@ -14,8 +14,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using UnityEngine;
+
+using MachinMachines.Utils;
 
 namespace MachinMachines
 {
@@ -24,11 +27,19 @@ namespace MachinMachines
         [Serializable]
         public class CountMapBucket : MapBucket
         {
-            public List<string> Files = new List<string>();
+            internal HashSet<string> UniqueItems = new HashSet<string>();
+            // The actual serialisable field
+            [SerializeField]
+            internal string[] Items;
 
-            public void Reset()
+            public override void Reset()
             {
-                Files.Clear();
+                UniqueItems.Clear();
+            }
+
+            public override void OnPreSerialise()
+            {
+                Items = UniqueItems.ToArray();
             }
         }
 
@@ -42,7 +53,7 @@ namespace MachinMachines
             protected override sealed void AddItemInternal(int bucketIdx, T item)
             {
                 string filepath = GetItemFilePath(item);
-                Buckets[bucketIdx].Files.Add(filepath);
+                Buckets[bucketIdx].UniqueItems.Add(filepath);
                 TotalItemsCount += 1;
             }
             protected override void ResetInternal()
@@ -81,28 +92,31 @@ namespace MachinMachines
 
             protected override string GetItemFilePath(string item)
             {
-                return item;
+                return Paths.NormalisePath(item).ToLower();
             }
             protected override int GetBucketIndexForObject(string filepath)
             {
-                int foundBucketIdx = -1;
+                string actualPath = Paths.NormalisePath(filepath).ToLower();
+                int foundBucketIdx;
                 int refCounter = 0;
-                if (!RefCountToUsage.TryGetValue(filepath, out refCounter))
+                if (!RefCountToUsage.TryGetValue(actualPath, out refCounter))
                 {
                     // Easy case: new item
                     foundBucketIdx = 0;
+                    RefCountToUsage.Add(actualPath, 0);
                 }
                 else
                 {
-                    int previousBucketIdx = (int)Math.Log(refCounter);
-                    int newBucketIdx = (int)Math.Log(refCounter + 1);
+                    int previousBucketIdx = (int)Math.Log(refCounter, 2.0);
+                    int newBucketIdx = (int)Math.Log(refCounter + 1, 2.0);
                     foundBucketIdx = newBucketIdx;
                     if (previousBucketIdx != newBucketIdx)
                     {
                         // Transfer the content for this item into the next bucket
-                        Buckets[previousBucketIdx].Files.Remove(filepath);
+                        Buckets[previousBucketIdx].UniqueItems.Remove(actualPath);
                     }
                 }
+                RefCountToUsage[actualPath] += 1;
                 return foundBucketIdx;
             }
         }
