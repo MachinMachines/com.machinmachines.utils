@@ -201,8 +201,7 @@ namespace MachinMachines
                 }
 
                 // All repositories are stored here and always maintained sorted by priority order
-                [SerializeField]
-                internal Repository[] _repositories;
+                public Repository[] _repositories;
 
                 private void Awake()
                 {
