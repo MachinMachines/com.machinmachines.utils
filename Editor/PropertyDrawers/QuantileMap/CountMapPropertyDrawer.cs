@@ -36,7 +36,7 @@ namespace MachinMachines
             protected override void OnDrawBucketGUI(SerializedProperty bucketProperty)
             {
                 SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
-                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Files");
+                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
                 string header = $"{serializedPropertyName.stringValue}refs - {serializedPropertyFiles.arraySize} item(s)";
                 if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
                 {

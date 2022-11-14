@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using MachinMachines.Utils;
 
@@ -28,12 +29,20 @@ namespace MachinMachines
         {
             [IsMemorySizeUnit]
             public long Size;
-            public List<string> Files = new List<string>();
+            internal HashSet<string> UniqueItems = new HashSet<string>();
+            // The actual serialisable field
+            [SerializeField]
+            internal string[] Items;
 
             public override void Reset()
             {
                 Size = 0;
-                Files.Clear();
+                UniqueItems.Clear();
+            }
+
+            public override void OnPreSerialise()
+            {
+                Items = UniqueItems.ToArray();
             }
         }
 
@@ -54,7 +63,7 @@ namespace MachinMachines
             {
                 string filepath = GetItemFilePath(item);
                 long filesize = GetItemFileSize(item);
-                Buckets[bucketIdx].Files.Add(filepath);
+                Buckets[bucketIdx].UniqueItems.Add(filepath);
                 Buckets[bucketIdx].Size += filesize;
                 TotalSizeBytes += filesize;
                 TotalItemsCount += 1;

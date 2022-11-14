@@ -39,7 +39,7 @@ namespace MachinMachines
             {
                 SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
                 SerializedProperty serializedPropertySize = bucketProperty.FindPropertyRelative("Size");
-                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Files");
+                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
                 string sizeDisplay = MemorySizeUnit.DisplayByteSize(serializedPropertySize.longValue, 1);
                 string header = $"{serializedPropertyName.stringValue}px - {serializedPropertyFiles.arraySize} item(s) - {sizeDisplay}";
                 if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
