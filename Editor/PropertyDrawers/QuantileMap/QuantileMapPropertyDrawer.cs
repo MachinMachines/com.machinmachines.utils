@@ -45,7 +45,7 @@ namespace MachinMachines
             {
                 EditorGUI.BeginProperty(position, label, property);
 
-                _foldout = EditorGUI.Foldout(position, _foldout, "QuantileMap");
+                _foldout = EditorGUI.Foldout(position, _foldout, property.displayName);
                 if (_foldout)
                 {
                     EditorGUI.indentLevel += 1;
