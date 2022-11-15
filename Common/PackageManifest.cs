@@ -153,7 +153,15 @@ namespace MachinMachines
                 using (StreamReader stream = new StreamReader(manifestPath))
                 {
                     string data = stream.ReadToEnd();
-                    JsonUtility.FromJsonOverwrite(data, result);
+                    try
+                    {
+                        JsonUtility.FromJsonOverwrite(data, result);
+                    }
+                    catch (System.Exception exception)
+                    {
+                        Debug.LogError($"PackageManifest - Error on import for {manifestPath}: exception '{exception.Message}'");
+                        return result;
+                    }
                     string[] lines = data.Split('\n');
                     int startLineIdx = 0;
                     int endLineIdx = 0;
