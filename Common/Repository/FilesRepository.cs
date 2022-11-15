@@ -45,11 +45,21 @@ namespace MachinMachines
             {
                 public const string FileExtension = "filesrepository";
 
-                public static FilesRepositoryManager Instance { get { return _instance; } }
+                public static FilesRepositoryManager Instance
+                {
+                    get
+                    {
+                        if (_instance == null)
+                        {
+                            _instance = new FilesRepositoryManager();
+                        }
+                        return _instance;
+                    }
+                }
                 // Mostly for debug
                 public FilesRepository[] Repositories { get { return _repositories.ToArray(); } }
 
-                private static readonly FilesRepositoryManager _instance = new FilesRepositoryManager();
+                private static FilesRepositoryManager _instance = new FilesRepositoryManager();
                 private HashSet<FilesRepository> _repositories = new HashSet<FilesRepository>();
 
                 public IEnumerable<FilesRepository.Repository> GetRepositoriesForUsage(RepositoryUsage usage)
