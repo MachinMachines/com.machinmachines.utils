@@ -27,6 +27,14 @@ namespace MachinMachines
             public string Label;
         }
 
+        public class DGMLLink
+        {
+            [XmlAttribute]
+            public string Source;
+            [XmlAttribute]
+            public string Target;
+        }
+
         [XmlRoot(Namespace = @"http://schemas.microsoft.com/vs/2009/dgml")]
         public class DirectedGraph
         {
@@ -37,7 +45,9 @@ namespace MachinMachines
             [XmlArrayItem("Node")]
             public DGMLNode[] Nodes;
 
-            public int Links { get; set; }
+            [XmlArray("Links")]
+            [XmlArrayItem("Link")]
+            public DGMLLink[] Links;
 
             public int Categories { get; set; }
 
