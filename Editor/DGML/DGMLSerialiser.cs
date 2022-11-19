@@ -25,6 +25,7 @@ namespace MachinMachines
             [XmlAttribute]
             public string Id;
             [XmlAttribute]
+            public string Category;
         }
 
         public class DGMLLink
@@ -33,6 +34,14 @@ namespace MachinMachines
             public string Source;
             [XmlAttribute]
             public string Target;
+        }
+
+        public class DGMLCategory
+        {
+            [XmlAttribute]
+            public string Id;
+            [XmlAttribute]
+            public string Background;
         }
 
         [XmlRoot(Namespace = @"http://schemas.microsoft.com/vs/2009/dgml")]
@@ -49,7 +58,9 @@ namespace MachinMachines
             [XmlArrayItem("Link")]
             public HashSet<DGMLLink> Links;
 
-            public int Categories { get; set; }
+            [XmlArray("Categories")]
+            [XmlArrayItem("Category")]
+            public HashSet<DGMLCategory> Categories;
 
             public int Properties { get; set; }
         }
