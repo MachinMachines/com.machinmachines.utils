@@ -24,7 +24,6 @@ namespace MachinMachines
             [XmlAttribute]
             public string Id;
             [XmlAttribute]
-            public string Label;
         }
 
         public class DGMLLink
