@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -42,11 +43,11 @@ namespace MachinMachines
 
             [XmlArray("Nodes")]
             [XmlArrayItem("Node")]
-            public DGMLNode[] Nodes;
+            public HashSet<DGMLNode> Nodes;
 
             [XmlArray("Links")]
             [XmlArrayItem("Link")]
-            public DGMLLink[] Links;
+            public HashSet<DGMLLink> Links;
 
             public int Categories { get; set; }
 
