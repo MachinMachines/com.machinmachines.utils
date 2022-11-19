@@ -20,6 +20,24 @@ namespace MachinMachines
 {
     namespace DGML
     {
+        public class DGMLNodeComparer : IEqualityComparer<DGMLNode>
+        {
+            public bool Equals(DGMLNode lhs, DGMLNode rhs)
+            {
+                // Check whether the objects are the same object.
+                if (lhs.Equals(rhs))
+                {
+                    return true;
+                }
+                return lhs.Id.ToLower().Equals(rhs.Id.ToLower());
+            }
+
+            public int GetHashCode(DGMLNode obj)
+            {
+                return obj.Id.ToLower().GetHashCode();
+            }
+        }
+
         public class DGMLNode
         {
             [XmlAttribute]
