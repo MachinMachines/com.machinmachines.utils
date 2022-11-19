@@ -24,8 +24,14 @@ namespace MachinMachines
         {
             [XmlAttribute]
             public string Id;
+
             [XmlAttribute]
             public string Category;
+
+            [XmlAttribute]
+            public string? Group = null;
+            [XmlIgnore]
+            public bool GroupSpecified { get { return this.Group != null; } }
         }
 
         public class DGMLLink
@@ -34,6 +40,11 @@ namespace MachinMachines
             public string Source;
             [XmlAttribute]
             public string Target;
+
+            [XmlAttribute]
+            public string? Category = null;
+            [XmlIgnore]
+            public bool CategorySpecified { get { return this.Category != null; } }
         }
 
         public class DGMLCategory
