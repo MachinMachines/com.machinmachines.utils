@@ -45,6 +45,14 @@ namespace MachinMachines
             {
                 public const string FileExtension = "filesrepository";
 
+                // Where to look for when resolving a path
+                public enum PathResolution
+                {
+                    Regular,  // Default
+                    EditorOnly,
+                    ExternalOnly
+                }
+
                 public static FilesRepositoryManager Instance
                 {
                     get
@@ -103,15 +111,38 @@ namespace MachinMachines
                 // External code using it (e.g. texture pool) tends to have a surrounding tringlerie,
                 // so make sure you are not bypassing something by calling it directly!
                 //
-                // editorOnly: only looks in "editor" folders (basically, those starting with "Assets/" or "Packages/")
-                public string GetFullPathFrom(RepositoryUsage usage, string relativePath, bool editorOnly = false)
+                // pathResolution: where to look for when resolving:
+                // "editor" folders such as those starting with "Assets/" or "Packages/" or external ones?
+                public string GetFullPathFrom(RepositoryUsage usage,
+                                              string relativePath,
+                                              PathResolution pathResolution = PathResolution.Regular)
                 {
                     bool isDirectoryPath = string.IsNullOrEmpty(Path.GetExtension(relativePath));
                     foreach (FilesRepository.Repository repo in GetRepositoriesForUsage(usage))
                     {
-                        if (editorOnly && !PathIsInEditor(repo.Path))
-                        {
-                            continue;
+                        bool pathIsInEditor = PathIsInEditor(repo.Path);
+                        switch (pathResolution) {
+                            default:
+                            case PathResolution.Regular:
+                                {
+                                    break;
+                                }
+                            case PathResolution.EditorOnly:
+                                {
+                                    if (!pathIsInEditor)
+                                    {
+                                        continue;
+                                    }
+                                    break;
+                                }
+                            case PathResolution.ExternalOnly:
+                                {
+                                    if (pathIsInEditor)
+                                    {
+                                        continue;
+                                    }
+                                    break;
+                                }
                         }
                         // Not really "absolute" as it can be relative to the project root
                         string absolutePath = Path.Combine(repo.Path, relativePath);
