@@ -47,7 +47,7 @@ namespace MachinMachines
             public string Category;
 
             [XmlAttribute]
-            public string? Group = null;
+            public string Group = null;
             [XmlIgnore]
             public bool GroupSpecified { get { return this.Group != null; } }
         }
@@ -60,7 +60,7 @@ namespace MachinMachines
             public string Target;
 
             [XmlAttribute]
-            public string? Category = null;
+            public string Category = null;
             [XmlIgnore]
             public bool CategorySpecified { get { return this.Category != null; } }
         }
