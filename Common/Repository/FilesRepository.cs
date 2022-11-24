@@ -72,7 +72,7 @@ namespace MachinMachines
 
                 public IEnumerable<FilesRepository.Repository> GetRepositoriesForUsage(RepositoryUsage usage)
                 {
-                    // Return all repositories for onve given usage
+                    // Return all repositories for one given usage
                     return _repositories.Where(item => item != null && item.Usage == usage)
                                         // All flattened into one big list
                                         .SelectMany(item => item._repositories)
