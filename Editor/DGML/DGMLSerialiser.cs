@@ -34,7 +34,7 @@ namespace MachinMachines
             // (optional) To be overridden by inheriting classes if need be
             public virtual Dictionary<string, Color> CategoryToColorMapping { get { return null; } }
 
-            public HierarchicalTreeItem<T>[] children;
+            public HierarchicalTreeItem<T>[] children = new HierarchicalTreeItem<T>[0];
 
             public DirectedGraph GenerateDirectedGraph()
             {
