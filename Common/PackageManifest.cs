@@ -46,7 +46,7 @@ namespace MachinMachines
 
         // Describes a package dependency as listed in the package manifest
         [System.Serializable]
-        public struct PackageDependency
+        public class PackageDependency
         {
             public string packageName;
             public string packageVersion;

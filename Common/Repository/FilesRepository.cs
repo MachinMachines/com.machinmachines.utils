@@ -234,7 +234,7 @@ namespace MachinMachines
 
                 // A file repository is a simple absolute path and a priority
                 [System.Serializable]
-                public struct Repository
+                public class Repository
                 {
                     [IsFilepath(false, "")]
                     public string Path;
