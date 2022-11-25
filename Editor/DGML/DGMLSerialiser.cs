@@ -14,12 +14,101 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
+
+using UnityEngine;
 
 namespace MachinMachines
 {
     namespace DGML
     {
+        // Super basic class for organising data as a hierarchical tree
+        // Only useful as inheriting classes can then be automatically dumped as DGML
+        public abstract class HierarchicalTreeItem<T>
+        {
+            // To be overridden by inheriting classes
+            public abstract string Name { get; }
+            // (optional) To be overridden by inheriting classes if need be
+            public virtual string Category { get { return ""; } }
+            // (optional) To be overridden by inheriting classes if need be
+            public virtual Dictionary<string, Color> CategoryToColorMapping { get { return null; } }
+
+            public HierarchicalTreeItem<T>[] children;
+
+            public DirectedGraph GenerateDirectedGraph()
+            {
+                DirectedGraph result = new DirectedGraph { Title = $"{Name}_graph" };
+                // Using only links (from child to parent)
+                IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> links = ConstructLinks_r(this);
+                // This way we can easily get all items (all distinct children and parents)
+                HashSet<HierarchicalTreeItem<T>> allItems = links.Select(item => item.Item1)
+                                                                 .Union(links.Select(item => item.Item2))
+                                                                 .ToHashSet();
+                // Then hand it over to DGML containers
+                result.Nodes = allItems
+                    .Select(item => new DGMLNode
+                    {
+                        Id = item.Name,
+                        Category = !string.IsNullOrEmpty(item.Category) ? item.Category : null
+                    })
+                    .ToHashSet(new DGMLNodeComparer());
+                result.Links = links
+                    .Select(item => new DGMLLink
+                    {
+                        Source = item.Item1.Name,
+                        Target = item.Item2.Name
+                    })
+                    .ToHashSet();
+                // If there is a lookup table setup, map every category to a color
+                if (CategoryToColorMapping != null)
+                {
+                    result.Categories = result.Nodes.GroupBy(item => item.Category)
+                                                  .Select(item => new DGMLCategory
+                                                  {
+                                                      Id = item.Key,
+                                                      Background = $"#ff{ColorUtility.ToHtmlStringRGB(CategoryToColorMapping[item.Key])}"
+                                                  })
+                                                  .ToHashSet();
+                }
+                return result;
+            }
+
+            public void DumpAsDGMLToPath(string graphPath)
+            {
+                DirectedGraph graph = GenerateDirectedGraph();
+                graphPath = Path.ChangeExtension(graphPath, DGMLSerialiser.Extension);
+                DGMLSerialiser.SerialiseToPath(graph, graphPath);
+            }
+
+            // Generator retrieving all children items, including the root one, as a flattened list
+            public IEnumerable<HierarchicalTreeItem<T>> GetAllItems_r()
+            {
+                yield return this;
+                foreach (HierarchicalTreeItem<T> child in children)
+                {
+                    foreach (HierarchicalTreeItem<T> item in child.GetAllItems_r())
+                    {
+                        yield return item;
+                    }
+                }
+            }
+
+            // Build a list of all "links" (dependency relationship) between all resources recursively
+            private IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> ConstructLinks_r<T>(HierarchicalTreeItem<T> root)
+            {
+                List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> result = new List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)>(root.children.Length);
+                foreach (HierarchicalTreeItem<T> child in root.children)
+                {
+                    result.Add((child, root));
+                    result.AddRange(ConstructLinks_r(child));
+                }
+                return result;
+            }
+        }
+
+        // A simple helper so we can consider two DGML nodes are equal
+        // as long as they have "equivalent" names (equal whatever the case)
         public class DGMLNodeComparer : IEqualityComparer<DGMLNode>
         {
             public bool Equals(DGMLNode lhs, DGMLNode rhs)
