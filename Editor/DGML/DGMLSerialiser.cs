@@ -25,7 +25,7 @@ namespace MachinMachines
     {
         // Super basic class for organising data as a hierarchical tree
         // Only useful as inheriting classes can then be automatically dumped as DGML
-        public abstract class HierarchicalTreeItem<T>
+        public abstract class HierarchicalTreeItem<T> where T : class
         {
             // To be overridden by inheriting classes
             public abstract string Name { get; }
@@ -35,6 +35,14 @@ namespace MachinMachines
             public virtual Dictionary<string, Color> CategoryToColorMapping { get { return null; } }
 
             public HierarchicalTreeItem<T>[] children = new HierarchicalTreeItem<T>[0];
+            // Same as the above but with the correct derived type
+            public IEnumerable<T> DirectChildren
+            {
+                get
+                {
+                    return children.Select(item => item as T);
+                }
+            }
 
             public DirectedGraph GenerateDirectedGraph()
             {
@@ -95,9 +103,9 @@ namespace MachinMachines
             }
 
             // Build a list of all "links" (dependency relationship) between all resources recursively
-            private IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> ConstructLinks_r<T>(HierarchicalTreeItem<T> root)
+            private IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> ConstructLinks_r(HierarchicalTreeItem<T> root)
             {
-                List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> result = new List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)>(root.children.Length);
+                List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> result = new(root.children.Length);
                 foreach (HierarchicalTreeItem<T> child in root.children)
                 {
                     result.Add((child, root));
