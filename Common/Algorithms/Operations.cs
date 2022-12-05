@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
 
-namespace MachinMachines.Utils
+namespace MachinMachines.Algorithms
 {
     // Named "Paths" so there is no collision with System.IO.Path
-    public static class Algorithms
+    public static class Operations
     {
 
         /// <summary> 

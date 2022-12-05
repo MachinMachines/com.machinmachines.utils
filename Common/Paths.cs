@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using MachinMachines.Algorithms;
+
 namespace MachinMachines.Utils
 {
     // Named "Paths" so there is no collision with System.IO.Path
@@ -155,7 +157,7 @@ namespace MachinMachines.Utils
                                           out HashSet<string> addedSet,
                                           out HashSet<string> removedSet)
         {
-            Algorithms.ReconcileItems(existingSet,
+            Operations.ReconcileItems(existingSet,
                                       toReconcileWithSet,
                                       out similarSet,
                                       out addedSet,
