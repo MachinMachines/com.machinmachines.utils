@@ -17,36 +17,20 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 
+using MachinMachines.Algorithms;
+
 using UnityEngine;
 
 namespace MachinMachines.DGML
 {
-    // Super basic class for organising data as a hierarchical tree
-    // Only useful as inheriting classes can then be automatically dumped as DGML
-    public abstract class HierarchicalTreeItem<T> where T : class
+    // Extension for inheriting classes to be automatically dumped as DGML
+    public static class HierarchicalTreeItemExtension
     {
-        // To be overridden by inheriting classes
-        public abstract string Name { get; }
-        // (optional) To be overridden by inheriting classes if need be
-        public virtual string Category { get { return ""; } }
-        // (optional) To be overridden by inheriting classes if need be
-        public virtual Dictionary<string, Color> CategoryToColorMapping { get { return null; } }
-
-        public HierarchicalTreeItem<T>[] children = new HierarchicalTreeItem<T>[0];
-        // Same as the above but with the correct derived type
-        public IEnumerable<T> DirectChildren
+        public static DirectedGraph GenerateDirectedGraph<T>(this HierarchicalTreeItem<T> hierarchicalTreeItem) where T : class
         {
-            get
-            {
-                return children.Select(item => item as T);
-            }
-        }
-
-        public DirectedGraph GenerateDirectedGraph()
-        {
-            DirectedGraph result = new DirectedGraph { Title = $"{Name}_graph" };
+            DirectedGraph result = new DirectedGraph { Title = $"{hierarchicalTreeItem.Name}_graph" };
             // Using only links (from child to parent)
-            IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> links = ConstructLinks_r(this);
+            IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> links = HierarchicalTreeItem<T>.ConstructLinks_r(hierarchicalTreeItem);
             // This way we can easily get all items (all distinct children and parents)
             HashSet<HierarchicalTreeItem<T>> allItems = links.Select(item => item.Item1)
                                                              .Union(links.Select(item => item.Item2))
@@ -67,49 +51,24 @@ namespace MachinMachines.DGML
                 })
                 .ToHashSet();
             // If there is a lookup table setup, map every category to a color
-            if (CategoryToColorMapping != null)
+            if (hierarchicalTreeItem.CategoryToColorMapping != null)
             {
                 result.Categories = result.Nodes.GroupBy(item => item.Category)
                                               .Select(item => new DGMLCategory
                                               {
                                                   Id = item.Key,
-                                                  Background = $"#ff{ColorUtility.ToHtmlStringRGB(CategoryToColorMapping[item.Key])}"
+                                                  Background = $"#ff{ColorUtility.ToHtmlStringRGB(hierarchicalTreeItem.CategoryToColorMapping[item.Key])}"
                                               })
                                               .ToHashSet();
             }
             return result;
         }
 
-        public void DumpAsDGMLToPath(string graphPath)
+        public static void DumpAsDGMLToPath<T>(this HierarchicalTreeItem<T> hierarchicalTreeItem, string graphPath) where T : class
         {
-            DirectedGraph graph = GenerateDirectedGraph();
+            DirectedGraph graph = GenerateDirectedGraph(hierarchicalTreeItem);
             graphPath = Path.ChangeExtension(graphPath, DGMLSerialiser.Extension);
             DGMLSerialiser.SerialiseToPath(graph, graphPath);
-        }
-
-        // Generator retrieving all children items, including the root one, as a flattened list
-        public IEnumerable<HierarchicalTreeItem<T>> GetAllItems_r()
-        {
-            yield return this;
-            foreach (HierarchicalTreeItem<T> child in children)
-            {
-                foreach (HierarchicalTreeItem<T> item in child.GetAllItems_r())
-                {
-                    yield return item;
-                }
-            }
-        }
-
-        // Build a list of all "links" (dependency relationship) between all resources recursively
-        private IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> ConstructLinks_r(HierarchicalTreeItem<T> root)
-        {
-            List<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> result = new(root.children.Length);
-            foreach (HierarchicalTreeItem<T> child in root.children)
-            {
-                result.Add((child, root));
-                result.AddRange(ConstructLinks_r(child));
-            }
-            return result;
         }
     }
 
