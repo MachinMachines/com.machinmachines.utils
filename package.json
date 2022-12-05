@@ -1,7 +1,7 @@
 {
   "name": "com.machinmachines.utils",
   "displayName": "MachinMachines utilities",
-  "version": "1.3.45",
+  "version": "1.3.46",
   "unity": "2020.3",
   "description": "MachinMachines utilities : various useful code snippets",
   "publishConfig": {

@@ -155,12 +155,12 @@ namespace MachinMachines.Utils
                                           out HashSet<string> addedSet,
                                           out HashSet<string> removedSet)
         {
-            similarSet = new HashSet<string>(toReconcileWithSet);
-            addedSet = new HashSet<string>(toReconcileWithSet);
-            removedSet = new HashSet<string>(existingSet);
-            similarSet.IntersectWith(existingSet);
-            addedSet.ExceptWith(similarSet);
-            removedSet.ExceptWith(similarSet);
+            Algorithms.ReconcileItems(existingSet,
+                                      toReconcileWithSet,
+                                      out similarSet,
+                                      out addedSet,
+                                      out removedSet,
+                                      new PathComparer());
         }
 
         // For a given path,
