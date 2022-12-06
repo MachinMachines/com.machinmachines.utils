@@ -156,6 +156,10 @@ namespace MachinMachines.DGML
         {
             using (StreamWriter stream = new StreamWriter(filepath))
             {
+                // This code throws an exception:
+                // System.IO.FileNotFoundException: Could not load the file 'MachinMachines.Utils.Editor.XmlSerializers'.
+                // This is expected behaviour.
+                // https://stackoverflow.com/questions/1127431/xmlserializer-giving-filenotfoundexception-at-constructor
                 XmlSerializer xmls = new XmlSerializer(typeof(DirectedGraph));
                 xmls.Serialize(stream, graph);
             }
