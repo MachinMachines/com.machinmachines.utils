@@ -68,12 +68,12 @@ namespace MachinMachines.Algorithms
         }
 
         // Generator retrieving all children items, including the root one, as a flattened list
-        public IEnumerable<HierarchicalTreeItem<T>> GetAllItems_r()
+        public IEnumerable<T> GetAllItems_r()
         {
-            yield return this;
+            yield return this as T;
             foreach (HierarchicalTreeItem<T> child in children)
             {
-                foreach (HierarchicalTreeItem<T> item in child.GetAllItems_r())
+                foreach (T item in child.GetAllItems_r())
                 {
                     yield return item;
                 }
