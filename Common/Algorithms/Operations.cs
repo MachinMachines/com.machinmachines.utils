@@ -28,7 +28,7 @@ namespace MachinMachines.Algorithms
         /// </summary>
         /// <param name="existingSet"></param>
         /// <param name="toReconcileWithSet"></param>
-        /// <param name="similarSet"></param>
+        /// <param name="similarSet">items present in both sets, returns the ones from "existingSet"</param>
         /// <param name="addedSet"></param>
         /// <param name="removedSet"></param>
         /// <param name="comparer">Optional custom comparer</param>
@@ -40,10 +40,10 @@ namespace MachinMachines.Algorithms
                                              IEqualityComparer<T> comparer = null)
         {
             IEqualityComparer<T> actualComparer = comparer ?? EqualityComparer<T>.Default;
-            similarSet = new HashSet<T>(toReconcileWithSet, actualComparer);
+            similarSet = new HashSet<T>(existingSet, actualComparer);
             addedSet = new HashSet<T>(toReconcileWithSet, actualComparer);
             removedSet = new HashSet<T>(existingSet, actualComparer);
-            similarSet.IntersectWith(existingSet);
+            similarSet.IntersectWith(toReconcileWithSet);
             addedSet.ExceptWith(similarSet);
             removedSet.ExceptWith(similarSet);
         }
