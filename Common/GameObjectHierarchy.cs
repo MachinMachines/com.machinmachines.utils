@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Collections.Generic;
+using System.Linq;
 
 using UnityEngine;
 
@@ -20,6 +21,48 @@ namespace MachinMachines
 {
     namespace Utils
     {
+        /// <summary>
+        /// Compare two game objects using only their scene path
+        /// Notice that it can skip a fixed number of parents in the path
+        /// SO with rootItemsSkipCount = 1 we get:
+        /// "bg_hseJulia01_variant/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
+        /// ==
+        /// "bg_hseJulia01_other/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
+        /// </summary>
+        public class GameObjectPathComparer : IEqualityComparer<GameObject>
+        {
+            int _rootItemsSkipCount;
+
+            public GameObjectPathComparer(int rootItemsSkipCount)
+            {
+                _rootItemsSkipCount = rootItemsSkipCount;
+            }
+
+            public bool Equals(GameObject lhs, GameObject rhs)
+            {
+                // Check whether the objects are the same GO instance
+                if (lhs.Equals(rhs))
+                {
+                    return true;
+                }
+                string lhsRelativePath = string.Join('/',
+                    GameObjectHierarchy.GetScenePath(lhs).Split('/')
+                                                         .Skip(_rootItemsSkipCount));
+                string rhsRelativePath = string.Join('/',
+                    GameObjectHierarchy.GetScenePath(rhs).Split('/')
+                                                         .Skip(_rootItemsSkipCount));
+                return lhsRelativePath == rhsRelativePath;
+            }
+
+            public int GetHashCode(GameObject obj)
+            {
+                string relativePath = string.Join('/',
+                    GameObjectHierarchy.GetScenePath(obj).Split('/')
+                                                         .Skip(_rootItemsSkipCount));
+                return relativePath.GetHashCode();
+            }
+        }
+
         public static class GameObjectHierarchy
         {
             // Browse all game objects children of the given root game object (not included in the results)
@@ -60,6 +103,14 @@ namespace MachinMachines
                     yield return current;
                     parentTransform = current.transform.parent;
                 }
+            }
+
+            public static string GetScenePath(GameObject gameObject)
+            {
+                return string.Join('/', BrowseParentHierarchy(gameObject)
+                                        .Reverse()
+                                        .Select(item => item.name)
+                                  );
             }
         }
     }
