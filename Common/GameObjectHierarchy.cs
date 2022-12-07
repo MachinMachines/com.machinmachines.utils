@@ -66,9 +66,12 @@ namespace MachinMachines
         public static class GameObjectHierarchy
         {
             // Browse all game objects children of the given root game object (not included in the results)
-            public static IEnumerable<GameObject> BrowseChildHierarchy(GameObject root)
+            public static IEnumerable<GameObject> BrowseChildHierarchy(GameObject root, bool includeRoot = false)
             {
-                // Skipping the root
+                if (includeRoot)
+                {
+                    yield return root;
+                }
                 foreach (Transform childTransform in root.transform)
                 {
                     foreach (GameObject child in BrowseChildHierarchy_r(childTransform.gameObject))
