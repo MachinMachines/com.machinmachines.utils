@@ -23,6 +23,9 @@ namespace MachinMachines.Utils
     // Named "Paths" so there is no collision with System.IO.Path
     public static class Paths
     {
+        /// <summary>
+        /// Helper class for case insensitive path comparison
+        /// </summary>
         public class PathComparer : IEqualityComparer<string>
         {
             public bool Equals(string lhs, string rhs)
@@ -46,51 +49,59 @@ namespace MachinMachines.Utils
             return value.Replace('\\', '/');
         }
 
-        // Equivalent of string.pathStartsWith suitable for paths
+        /// <summary>
+        /// Equivalent of string.pathStartsWith suitable for paths
+        /// </summary>
         public static bool PathStartsWith(this string lhs, string rhs)
         {
             return NormalisePath(lhs).StartsWith(NormalisePath(rhs), StringComparison.OrdinalIgnoreCase);
         }
 
-        // Equivalent of string.Equals() suitable for paths
+        /// <summary>
+        /// Equivalent of string.Equals() suitable for paths 
+        /// </summary>
         public static bool PathsAreEquivalent(string lhs, string rhs)
         {
             PathComparer cmp = new PathComparer();
             return cmp.Equals(lhs, rhs);
         }
 
-        // From the given string input, retrieve a string suitable for a file name
-        // For instance this string: Toto"a>b<c
-        // will yield: Toto_a_b_c
+        /// <summary>
+        /// From the given string input, retrieve a string suitable for a file name
+        /// For instance this string: Toto"a>b<c
+        /// will yield: Toto_a_b_c
+        /// </summary>
         public static string SanitiseFilename(string input)
         {
             return String.Join("_", input.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         }
 
-        // Attemps to retrieve the path "toPath" relative from "fromPath"
-        //
-        // Typical example
-        // with:
-        // fromPath = Application.dataPath (= "D:/MachinMachines/Assets")
-        // toPath = "D:/MachinMachines/Assets/Renderer/Textures/HDRI/HDRI_01.psd"
-        // it yields:
-        // "Assets\Renderer\Textures\HDRI\HDRI_01.psd"
-        //
-        // Beware, it can get tricky!
-        //
-        // GOTCHA: beware of trailing slashes!
-        // With:
-        // fromPath = "D:/MachinMachines/Assets/" (exactly the same as the above example + a trailing "/")
-        // toPath = "D:/MachinMachines/Assets/Renderer/Textures/HDRI/HDRI_01.psd"
-        // it yields:
-        // "Renderer\Textures\HDRI\HDRI_01.psd"
-        //
-        // GOTCHA: matching seemingly unrelated paths
-        // With:
-        // fromPath = Application.dataPath (= "D:/MachinMachines/Assets")
-        // toPath = "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/Texture/BlueNoise16/L/LDR_LLL1_25.png"
-        // it yields:
-        // "Library\PackageCache\com.unity.render-pipelines.high-definition@12.1.6\Runtime\RenderPipelineResources\Texture\BlueNoise16\L\LDR_LLL1_25.png"
+        /// <summary>
+        /// Attemps to retrieve the path "toPath" relative from "fromPath"
+        ///
+        /// Typical example
+        /// with:
+        /// fromPath = Application.dataPath (= "D:/MachinMachines/Assets")
+        /// toPath = "D:/MachinMachines/Assets/Renderer/Textures/HDRI/HDRI_01.psd"
+        /// it yields:
+        /// "Assets\Renderer\Textures\HDRI\HDRI_01.psd"
+        ///
+        /// Beware, it can get tricky!
+        ///
+        /// GOTCHA: beware of trailing slashes!
+        /// With:
+        /// fromPath = "D:/MachinMachines/Assets/" (exactly the same as the above example + a trailing "/")
+        /// toPath = "D:/MachinMachines/Assets/Renderer/Textures/HDRI/HDRI_01.psd"
+        /// it yields:
+        /// "Renderer\Textures\HDRI\HDRI_01.psd"
+        ///
+        /// GOTCHA: matching seemingly unrelated paths
+        /// With:
+        /// fromPath = Application.dataPath (= "D:/MachinMachines/Assets")
+        /// toPath = "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/Texture/BlueNoise16/L/LDR_LLL1_25.png"
+        /// it yields:
+        /// "Library\PackageCache\com.unity.render-pipelines.high-definition@12.1.6\Runtime\RenderPipelineResources\Texture\BlueNoise16\L\LDR_LLL1_25.png"
+        /// </summary>
         public static string GetRelativePath(string fromPath, string toPath)
         {
             // Yay, yet another shoutout to https://stackoverflow.com/questions/275689/how-to-get-relative-path-from-absolute-path
@@ -114,8 +125,10 @@ namespace MachinMachines.Utils
         }
 
 #if UNITY_EDITOR
-        // Inspired from TextMesh Pro similar function
-        // No runtime version!
+        /// <summary>
+        /// Inspired from TextMesh Pro similar function
+        /// No runtime version!
+        /// </summary>
         public static string GetPackagePath(string packageFullName, bool fullPath)
         {
             // Check for potential UPM package
@@ -147,10 +160,14 @@ namespace MachinMachines.Utils
         }
 #endif  // UNITY_EDITOR
 
-        // Given two sets of files, "reconcile" them similarly to P4 reconcile:
-        // - identify files present in both sets ("similar")
-        // - identify files present in the set to be reconciled with only ("added")
-        // - identify files present in the existing set only ("removed")
+        /// <summary>
+        /// Given two sets of files, "reconcile" them similarly to P4 reconcile
+        /// </summary>
+        /// <param name="existingSet"></param>
+        /// <param name="toReconcileWithSet"></param>
+        /// <param name="similarSet">files present in both sets ("similar")</param>
+        /// <param name="addedSet">files present in the set to be reconciled with only ("added")</param>
+        /// <param name="removedSet">files present in the existing set only ("removed")</param>
         public static void ReconcileFiles(IEnumerable<string> existingSet,
                                           IEnumerable<string> toReconcileWithSet,
                                           out HashSet<string> similarSet,
@@ -165,8 +182,10 @@ namespace MachinMachines.Utils
                                       new PathComparer());
         }
 
-        // For a given path,
-        // get all parent directories (from innermost to outermost) until the given root is met
+        /// <summary>
+        /// For a given path,
+        /// get all parent directories (from innermost to outermost) until the given root is met
+        /// </summary>
         public static IEnumerable<string> GetParentDirectories(string path, string rootPath)
         {
             List<string> result = new List<string>();
@@ -179,8 +198,10 @@ namespace MachinMachines.Utils
             return result;
         }
 
-        // For multiple input paths,
-        // get all parent directories (from innermost to outermost) until the given root is met
+        /// <summary>
+        /// For multiple input paths,
+        /// get all parent directories (from innermost to outermost) until the given root is met
+        /// </summary>
         public static IEnumerable<string> GetParentDirectories(IEnumerable<string> paths, string pathRoot)
         {
             HashSet<string> parentDirectories = new HashSet<string>();
