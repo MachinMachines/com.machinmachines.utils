@@ -116,6 +116,7 @@ namespace MachinMachines
                         Buckets[previousBucketIdx].UniqueItems.Remove(actualPath);
                     }
                 }
+                foundBucketIdx = Math.Clamp(foundBucketIdx, kLowerBucketIndex, kHigherBucketIndex + 1);
                 RefCountToUsage[actualPath] += 1;
                 return foundBucketIdx;
             }
