@@ -20,106 +20,107 @@ using UnityEngine;
 
 using MachinMachines.Utils;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    [Serializable]
+    public class CountMapBucket : MapBucket
     {
-        [Serializable]
-        public class CountMapBucket : MapBucket
+        internal HashSet<string> UniqueItems = new HashSet<string>();
+        // The actual serialisable field
+        [SerializeField]
+        internal string[] Items;
+
+        public override void Reset()
         {
-            internal HashSet<string> UniqueItems = new HashSet<string>();
-            // The actual serialisable field
-            [SerializeField]
-            internal string[] Items;
-
-            public override void Reset()
-            {
-                UniqueItems.Clear();
-            }
-
-            public override void OnPreSerialise()
-            {
-                Items = UniqueItems.ToArray();
-            }
+            UniqueItems.Clear();
         }
 
-        // A reference count map generic enough to handle various usages
-        [Serializable]
-        public abstract class CountMapGeneric<T> : QuantileMap<T, CountMapBucket>
+        public override void OnPreSerialise()
         {
-            [SerializeField]
-            private int TotalItemsCount;
+            Items = UniqueItems.ToArray();
+        }
+    }
 
-            protected override sealed void AddItemInternal(int bucketIdx, T item)
+    /// <summary>
+    /// A reference count map generic enough to handle various usages
+    /// </summary>
+    [Serializable]
+    public abstract class CountMapGeneric<T> : QuantileMap<T, CountMapBucket>
+    {
+        [SerializeField]
+        private int TotalItemsCount;
+
+        protected override sealed void AddItemInternal(int bucketIdx, T item)
+        {
+            string filepath = GetItemFilePath(item);
+            Buckets[bucketIdx].UniqueItems.Add(filepath);
+            TotalItemsCount += 1;
+        }
+        protected override void ResetInternal()
+        {
+            TotalItemsCount = 0;
+        }
+        protected abstract string GetItemFilePath(T item);
+    }
+
+    /// <summary>
+    /// A ready-made reference count map with a very simple accessor
+    /// </summary>
+    [Serializable]
+    public class CountMap : CountMapGeneric<string>
+    {
+        public override int kLowerBucketIndex { get { return 0; } }
+        public override int kHigherBucketIndex { get { return 10; } }
+
+        private Dictionary<string, int> RefCountToUsage = new Dictionary<string, int>();
+
+        protected override void ResetInternal()
+        {
+            base.ResetInternal();
+            RefCountToUsage.Clear();
+        }
+        protected override string GetNameForBucket(int bucketIdx)
+        {
+            if (bucketIdx == 0)
             {
-                string filepath = GetItemFilePath(item);
-                Buckets[bucketIdx].UniqueItems.Add(filepath);
-                TotalItemsCount += 1;
+                return $"<= {(int)Math.Pow(2.0, kLowerBucketIndex)}";
             }
-            protected override void ResetInternal()
+            if (bucketIdx == kBucketsCount - 1)
             {
-                TotalItemsCount = 0;
+                return $">= {(int)Math.Pow(2.0, kHigherBucketIndex + 1)}";
             }
-            protected abstract string GetItemFilePath(T item);
+            return $"From {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)} to {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex + 1) - 1}";
         }
 
-        // A ready-made reference count map with a very simple accessor
-        [Serializable]
-        public class CountMap : CountMapGeneric<string>
+        protected override string GetItemFilePath(string item)
         {
-            public override int kLowerBucketIndex { get { return 0; } }
-            public override int kHigherBucketIndex { get { return 10; } }
-
-            private Dictionary<string, int> RefCountToUsage = new Dictionary<string, int>();
-
-            protected override void ResetInternal()
+            return Paths.NormalisePath(item).ToLower();
+        }
+        protected override int GetBucketIndexForObject(string filepath)
+        {
+            string actualPath = Paths.NormalisePath(filepath).ToLower();
+            int foundBucketIdx;
+            int refCounter = 0;
+            if (!RefCountToUsage.TryGetValue(actualPath, out refCounter))
             {
-                base.ResetInternal();
-                RefCountToUsage.Clear();
+                // Easy case: new item
+                foundBucketIdx = 0;
+                RefCountToUsage.Add(actualPath, 0);
             }
-            protected override string GetNameForBucket(int bucketIdx)
+            else
             {
-                if (bucketIdx == 0)
+                int previousBucketIdx = (int)Math.Log(refCounter, 2.0);
+                int newBucketIdx = (int)Math.Log(refCounter + 1, 2.0);
+                foundBucketIdx = newBucketIdx;
+                if (previousBucketIdx != newBucketIdx)
                 {
-                    return $"<={(int)Math.Pow(2.0, kLowerBucketIndex)}";
+                    // Transfer the content for this item into the next bucket
+                    Buckets[previousBucketIdx].UniqueItems.Remove(actualPath);
                 }
-                if (bucketIdx == kBucketsCount - 1)
-                {
-                    return $">{(int)Math.Pow(2.0, kHigherBucketIndex + 1)}";
-                }
-                return $"From {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)} to {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex + 1) - 1}";
             }
-
-            protected override string GetItemFilePath(string item)
-            {
-                return Paths.NormalisePath(item).ToLower();
-            }
-            protected override int GetBucketIndexForObject(string filepath)
-            {
-                string actualPath = Paths.NormalisePath(filepath).ToLower();
-                int foundBucketIdx;
-                int refCounter = 0;
-                if (!RefCountToUsage.TryGetValue(actualPath, out refCounter))
-                {
-                    // Easy case: new item
-                    foundBucketIdx = 0;
-                    RefCountToUsage.Add(actualPath, 0);
-                }
-                else
-                {
-                    int previousBucketIdx = (int)Math.Log(refCounter, 2.0);
-                    int newBucketIdx = (int)Math.Log(refCounter + 1, 2.0);
-                    foundBucketIdx = newBucketIdx;
-                    if (previousBucketIdx != newBucketIdx)
-                    {
-                        // Transfer the content for this item into the next bucket
-                        Buckets[previousBucketIdx].UniqueItems.Remove(actualPath);
-                    }
-                }
-                foundBucketIdx = Math.Clamp(foundBucketIdx, kLowerBucketIndex, kHigherBucketIndex + 1);
-                RefCountToUsage[actualPath] += 1;
-                return foundBucketIdx;
-            }
+            foundBucketIdx = Math.Clamp(foundBucketIdx, kLowerBucketIndex, kHigherBucketIndex + 1);
+            RefCountToUsage[actualPath] += 1;
+            return foundBucketIdx;
         }
     }
 }

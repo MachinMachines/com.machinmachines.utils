@@ -20,77 +20,76 @@ using MachinMachines.Utils;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    [Serializable]
+    public class FileSizeMapBucket : MapBucket
     {
-        [Serializable]
-        public class FileSizeMapBucket : MapBucket
+        [IsMemorySizeUnit]
+        public long Size;
+        internal HashSet<string> UniqueItems = new HashSet<string>();
+        // The actual serialisable field
+        [SerializeField]
+        internal string[] Items;
+
+        public override void Reset()
         {
-            [IsMemorySizeUnit]
-            public long Size;
-            internal HashSet<string> UniqueItems = new HashSet<string>();
-            // The actual serialisable field
-            [SerializeField]
-            internal string[] Items;
-
-            public override void Reset()
-            {
-                Size = 0;
-                UniqueItems.Clear();
-            }
-
-            public override void OnPreSerialise()
-            {
-                Items = UniqueItems.ToArray();
-            }
+            Size = 0;
+            UniqueItems.Clear();
         }
 
-        // A file size map generic enough to handle various usages
-        [Serializable]
-        public abstract class FileSizeMap<T> : QuantileMap<T, FileSizeMapBucket>
+        public override void OnPreSerialise()
         {
-            public override int kLowerBucketIndex { get { return 3; } }
-            public override int kHigherBucketIndex { get { return 12; } }
-
-            [SerializeField]
-            [IsMemorySizeUnit]
-            private long TotalSizeBytes;
-            [SerializeField]
-            private int TotalItemsCount;
-
-            protected override void AddItemInternal(int bucketIdx, T item)
-            {
-                string filepath = GetItemFilePath(item);
-                long filesize = GetItemFileSize(item);
-                Buckets[bucketIdx].UniqueItems.Add(filepath);
-                Buckets[bucketIdx].Size += filesize;
-                TotalSizeBytes += filesize;
-                TotalItemsCount += 1;
-            }
-
-            protected override string GetNameForBucket(int bucketIdx)
-            {
-                // The first and last elements are go-to for sizes below or beyond the accepted dimensions
-                if (bucketIdx == 0)
-                {
-                    return $"<={(int)Math.Pow(2.0, kLowerBucketIndex)}";
-                }
-                if (bucketIdx == kBucketsCount - 1)
-                {
-                    return $">{(int)Math.Pow(2.0, kHigherBucketIndex)}";
-                }
-                return $"{(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)}";
-            }
-
-            protected override void ResetInternal()
-            {
-                TotalSizeBytes = 0;
-                TotalItemsCount = 0;
-            }
-
-            protected abstract string GetItemFilePath(T item);
-            protected abstract long GetItemFileSize(T item);
+            Items = UniqueItems.ToArray();
         }
+    }
+
+    /// <summary>
+    /// A file size map generic enough to handle various usages
+    /// </summary>
+    [Serializable]
+    public abstract class FileSizeMap<T> : QuantileMap<T, FileSizeMapBucket>
+    {
+        public override int kLowerBucketIndex { get { return 3; } }
+        public override int kHigherBucketIndex { get { return 12; } }
+
+        [SerializeField]
+        [IsMemorySizeUnit]
+        private long TotalSizeBytes;
+        [SerializeField]
+        private int TotalItemsCount;
+
+        protected override void AddItemInternal(int bucketIdx, T item)
+        {
+            string filepath = GetItemFilePath(item);
+            long filesize = GetItemFileSize(item);
+            Buckets[bucketIdx].UniqueItems.Add(filepath);
+            Buckets[bucketIdx].Size += filesize;
+            TotalSizeBytes += filesize;
+            TotalItemsCount += 1;
+        }
+
+        protected override string GetNameForBucket(int bucketIdx)
+        {
+            // The first and last elements are go-to for sizes below or beyond the accepted dimensions
+            if (bucketIdx == 0)
+            {
+                return $"<={(int)Math.Pow(2.0, kLowerBucketIndex)}";
+            }
+            if (bucketIdx == kBucketsCount - 1)
+            {
+                return $">{(int)Math.Pow(2.0, kHigherBucketIndex)}";
+            }
+            return $"{(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)}";
+        }
+
+        protected override void ResetInternal()
+        {
+            TotalSizeBytes = 0;
+            TotalItemsCount = 0;
+        }
+
+        protected abstract string GetItemFilePath(T item);
+        protected abstract long GetItemFileSize(T item);
     }
 }

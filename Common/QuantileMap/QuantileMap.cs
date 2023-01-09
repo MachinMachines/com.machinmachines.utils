@@ -17,91 +17,92 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    /// <summary>
+    /// One named bucket
+    /// This should be abstract but it makes reusing it in the full map below harder without generics 
+    /// </summary>
+    [Serializable]
+    public class MapBucket : ISerializationCallbackReceiver
     {
-        // One named bucket
-        // This should be abstract but it makes reusing it in the full map below harder without generics
-        [Serializable]
-        public class MapBucket : ISerializationCallbackReceiver
+        public string Name;
+
+        public virtual void Reset()
         {
-            public string Name;
+            throw new NotImplementedException();
+        }
 
-            public virtual void Reset()
+        // Optional in child classes
+        public virtual void OnPreSerialise() { }
+
+        public void OnBeforeSerialize()
+        {
+            OnPreSerialise();
+        }
+
+        public void OnAfterDeserialize()
+        {
+        }
+    }
+
+    /// <summary>
+    /// A "quantile map", mapping the input type into buckets depending on its fields 
+    /// </summary>
+    [Serializable]
+    public abstract class QuantileMap<T, BucketType> where BucketType : MapBucket, new()
+    {
+        // To be overridden by inheriting classes
+        public abstract int kLowerBucketIndex { get; }
+        public abstract int kHigherBucketIndex { get; }
+
+        // We also plan to have a "<=min" and a ">max" buckets
+        protected int kBucketsCount { get { return kHigherBucketIndex - kLowerBucketIndex + 2; } }
+
+        [SerializeField]
+        protected BucketType[] Buckets;
+
+        public QuantileMap()
+        {
+            Buckets = new BucketType[kBucketsCount];
+            for (int idx = 0; idx < kBucketsCount; ++idx)
             {
-                throw new NotImplementedException();
-            }
-
-            // Optional in child classes
-            public virtual void OnPreSerialise() { }
-
-            public void OnBeforeSerialize()
-            {
-                OnPreSerialise();
-            }
-
-            public void OnAfterDeserialize()
-            {
+                Buckets[idx] = new BucketType();
+                Buckets[idx].Name = GetNameForBucket(idx);
             }
         }
 
-        // A "quantile map", mapping the input type into buckets depending on its fields
-        [Serializable]
-        public abstract class QuantileMap<T, BucketType> where BucketType : MapBucket, new()
+        public void Reset()
         {
-            // To be overridden by inheriting classes
-            public abstract int kLowerBucketIndex { get; }
-            public abstract int kHigherBucketIndex { get; }
-
-            // We also plan to have a "<=min" and a ">max" buckets
-            protected int kBucketsCount { get { return kHigherBucketIndex - kLowerBucketIndex + 2; } }
-
-            [SerializeField]
-            protected BucketType[] Buckets;
-
-            public QuantileMap()
+            foreach (MapBucket bucket in Buckets)
             {
-                Buckets = new BucketType[kBucketsCount];
-                for (int idx = 0; idx < kBucketsCount; ++idx)
-                {
-                    Buckets[idx] = new BucketType();
-                    Buckets[idx].Name = GetNameForBucket(idx);
-                }
+                bucket.Reset();
             }
-
-            public void Reset()
-            {
-                foreach (MapBucket bucket in Buckets)
-                {
-                    bucket.Reset();
-                }
-                ResetInternal();
-            }
-            public void AddItem(T item)
-            {
-                int bucketIdx = GetBucketIndexForObject(item);
-                AddItemInternal(bucketIdx, item);
-            }
-
-            public void AddItems(IEnumerable<T> items)
-            {
-                foreach (T item in items)
-                {
-                    AddItem(item);
-                }
-            }
-
-            public string SerialiseToJson()
-            {
-                return JsonUtility.ToJson(this, true);
-            }
-
-            // To be overridden by inheriting classes
-            protected abstract void AddItemInternal(int bucketIdx, T item);
-            protected abstract string GetNameForBucket(int bucketIdx);
-            protected abstract void ResetInternal();
-            protected abstract int GetBucketIndexForObject(T item);
+            ResetInternal();
         }
+        public void AddItem(T item)
+        {
+            int bucketIdx = GetBucketIndexForObject(item);
+            AddItemInternal(bucketIdx, item);
+        }
+
+        public void AddItems(IEnumerable<T> items)
+        {
+            foreach (T item in items)
+            {
+                AddItem(item);
+            }
+        }
+
+        public string SerialiseToJson()
+        {
+            return JsonUtility.ToJson(this, true);
+        }
+
+        // To be overridden by inheriting classes
+        protected abstract void AddItemInternal(int bucketIdx, T item);
+        protected abstract string GetNameForBucket(int bucketIdx);
+        protected abstract void ResetInternal();
+        protected abstract int GetBucketIndexForObject(T item);
     }
 }
