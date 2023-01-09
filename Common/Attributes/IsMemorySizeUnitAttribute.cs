@@ -16,15 +16,14 @@ using System;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    /// <summary>
+    /// Useful to annotate integer values representing a memory size
+    /// Has a custom drawer displaying the size in the proper unit 
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    public class IsMemorySizeUnitAttribute : PropertyAttribute
     {
-        // Useful to annotate integer values representing a memory size
-        // Has a custom drawer displaying the size in the proper unit
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-        public class IsMemorySizeUnitAttribute : PropertyAttribute
-        {
-        }
     }
 }

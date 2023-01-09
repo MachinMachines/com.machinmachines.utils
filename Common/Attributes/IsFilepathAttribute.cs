@@ -16,31 +16,28 @@ using System;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    public class IsFilepathAttribute : PropertyAttribute
     {
-        [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-        public class IsFilepathAttribute : PropertyAttribute
+        public enum FileType
         {
-            public enum FileType
-            {
-                File,
-                Directory,
-                // This allows to bypass the "fully qualified check" of settings, please use responsibly!
-                RootDirectory
-            }
+            File,
+            Directory,
+            // This allows to bypass the "fully qualified check" of settings, please use responsibly!
+            RootDirectory
+        }
 
-            public readonly bool IsReadOnly;
-            public readonly string ExtensionMatch;
-            public readonly FileType Filetype;
+        public readonly bool IsReadOnly;
+        public readonly string ExtensionMatch;
+        public readonly FileType Filetype;
 
-            public IsFilepathAttribute(bool isReadOnly, string extensionMatch = "", FileType filetype = FileType.File)
-            {
-                IsReadOnly = isReadOnly;
-                ExtensionMatch = extensionMatch;
-                Filetype = filetype;
-            }
+        public IsFilepathAttribute(bool isReadOnly, string extensionMatch = "", FileType filetype = FileType.File)
+        {
+            IsReadOnly = isReadOnly;
+            ExtensionMatch = extensionMatch;
+            Filetype = filetype;
         }
     }
 }

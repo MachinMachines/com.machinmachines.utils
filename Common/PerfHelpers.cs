@@ -15,22 +15,21 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    public static class PerfHelpers
     {
-        public static class PerfHelpers
+        /// <summary>
+        /// A simple utility to build a lookup table for enum string values
+        /// This is required due to Enum.Parse being slow as hell
+        /// </summary>
+        public static Dictionary<string, T> BuildLookupTable<T>(bool toLower = false) where T : System.Enum
         {
-            // A simple utility to quickly build a lookup table for enum string values
-            // This is required due to Enum.Parse being slow as hell
-            public static Dictionary<string, T> BuildLookupTable<T>(bool toLower = false) where T : System.Enum
-            {
-                return System.Enum.GetNames(typeof(T))
-                    .ToDictionary(
-                        item => toLower ? item.ToLower() : item,
-                        item => (T)System.Enum.Parse(typeof(T), item)
-                    );
-            }
+            return System.Enum.GetNames(typeof(T))
+                .ToDictionary(
+                    item => toLower ? item.ToLower() : item,
+                    item => (T)System.Enum.Parse(typeof(T), item)
+                );
         }
     }
 }

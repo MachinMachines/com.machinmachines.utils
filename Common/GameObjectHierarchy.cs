@@ -17,104 +17,110 @@ using System.Linq;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    /// <summary>
+    /// Compare two game objects using only their scene path
+    /// Notice that it can skip a fixed number of parents in the path
+    /// So with rootItemsSkipCount = 1 we get:
+    /// "bg_hseJulia01_variant/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
+    /// ==
+    /// "bg_hseJulia01_other/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
+    /// </summary>
+    public class GameObjectPathComparer : IEqualityComparer<GameObject>
+    {
+        int _rootItemsSkipCount;
+
+        public GameObjectPathComparer(int rootItemsSkipCount)
+        {
+            _rootItemsSkipCount = rootItemsSkipCount;
+        }
+
+        public bool Equals(GameObject lhs, GameObject rhs)
+        {
+            // Check whether the objects are the same GO instance
+            if (lhs.Equals(rhs))
+            {
+                return true;
+            }
+            string lhsRelativePath = string.Join('/',
+                GameObjectHierarchy.GetScenePath(lhs).Split('/')
+                                                     .Skip(_rootItemsSkipCount));
+            string rhsRelativePath = string.Join('/',
+                GameObjectHierarchy.GetScenePath(rhs).Split('/')
+                                                     .Skip(_rootItemsSkipCount));
+            return lhsRelativePath == rhsRelativePath;
+        }
+
+        public int GetHashCode(GameObject obj)
+        {
+            string relativePath = string.Join('/',
+                GameObjectHierarchy.GetScenePath(obj).Split('/')
+                                                     .Skip(_rootItemsSkipCount));
+            return relativePath.GetHashCode();
+        }
+    }
+
+    public static class GameObjectHierarchy
     {
         /// <summary>
-        /// Compare two game objects using only their scene path
-        /// Notice that it can skip a fixed number of parents in the path
-        /// SO with rootItemsSkipCount = 1 we get:
-        /// "bg_hseJulia01_variant/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
-        /// ==
-        /// "bg_hseJulia01_other/bg_hseJulia01_ctr_root01/bg_hseJulia01_ctr_pipe01_mstr/bg_hseJulia01_mdl_pipe01"
+        /// Browse all game objects children of the given root game object (not included in the results)
         /// </summary>
-        public class GameObjectPathComparer : IEqualityComparer<GameObject>
+        public static IEnumerable<GameObject> BrowseChildHierarchy(GameObject root, bool includeRoot = false)
         {
-            int _rootItemsSkipCount;
-
-            public GameObjectPathComparer(int rootItemsSkipCount)
+            if (includeRoot)
             {
-                _rootItemsSkipCount = rootItemsSkipCount;
+                yield return root;
             }
-
-            public bool Equals(GameObject lhs, GameObject rhs)
+            foreach (Transform childTransform in root.transform)
             {
-                // Check whether the objects are the same GO instance
-                if (lhs.Equals(rhs))
+                foreach (GameObject child in BrowseChildHierarchy_r(childTransform.gameObject))
                 {
-                    return true;
+                    yield return child;
                 }
-                string lhsRelativePath = string.Join('/',
-                    GameObjectHierarchy.GetScenePath(lhs).Split('/')
-                                                         .Skip(_rootItemsSkipCount));
-                string rhsRelativePath = string.Join('/',
-                    GameObjectHierarchy.GetScenePath(rhs).Split('/')
-                                                         .Skip(_rootItemsSkipCount));
-                return lhsRelativePath == rhsRelativePath;
-            }
-
-            public int GetHashCode(GameObject obj)
-            {
-                string relativePath = string.Join('/',
-                    GameObjectHierarchy.GetScenePath(obj).Split('/')
-                                                         .Skip(_rootItemsSkipCount));
-                return relativePath.GetHashCode();
             }
         }
 
-        public static class GameObjectHierarchy
+        /// <summary>
+        /// Helper of the above BrowseChildHierarchy() returning the root game object
+        /// </summary>
+        public static IEnumerable<GameObject> BrowseChildHierarchy_r(GameObject root)
         {
-            // Browse all game objects children of the given root game object (not included in the results)
-            public static IEnumerable<GameObject> BrowseChildHierarchy(GameObject root, bool includeRoot = false)
+            yield return root;
+            foreach (Transform childTransform in root.transform)
             {
-                if (includeRoot)
+                foreach (GameObject child in BrowseChildHierarchy_r(childTransform.gameObject))
                 {
-                    yield return root;
-                }
-                foreach (Transform childTransform in root.transform)
-                {
-                    foreach (GameObject child in BrowseChildHierarchy_r(childTransform.gameObject))
-                    {
-                        yield return child;
-                    }
+                    yield return child;
                 }
             }
+        }
 
-            // Helper of the above BrowseChildHierarchy() returning the root game object
-            public static IEnumerable<GameObject> BrowseChildHierarchy_r(GameObject root)
+        /// <summary>
+        /// Get to the root of the given leaf game object (included in the results)
+        /// </summary>
+        public static IEnumerable<GameObject> BrowseParentHierarchy(GameObject leaf, GameObject topObject = null)
+        {
+            // This time the leaf is not skipped
+            yield return leaf;
+            Transform parentTransform = leaf.transform.parent;
+            while ((parentTransform != null) && (topObject == null || parentTransform != topObject.transform))
             {
-                yield return root;
-                foreach (Transform childTransform in root.transform)
-                {
-                    foreach (GameObject child in BrowseChildHierarchy_r(childTransform.gameObject))
-                    {
-                        yield return child;
-                    }
-                }
+                GameObject current = parentTransform.gameObject;
+                yield return current;
+                parentTransform = current.transform.parent;
             }
+        }
 
-            // Get to the root of the given leaf game object (included in the results)
-            public static IEnumerable<GameObject> BrowseParentHierarchy(GameObject leaf, GameObject topObject = null)
-            {
-                // This time the leaf is not skipped
-                yield return leaf;
-                Transform parentTransform = leaf.transform.parent;
-                while ((parentTransform != null) && (topObject == null || parentTransform != topObject.transform))
-                {
-                    GameObject current = parentTransform.gameObject;
-                    yield return current;
-                    parentTransform = current.transform.parent;
-                }
-            }
-
-            public static string GetScenePath(GameObject gameObject)
-            {
-                return string.Join('/', BrowseParentHierarchy(gameObject)
-                                        .Reverse()
-                                        .Select(item => item.name)
-                                  );
-            }
+        /// <summary>
+        /// Retrieve an object full path in the scene hierarchy
+        /// </summary>
+        public static string GetScenePath(GameObject gameObject)
+        {
+            return string.Join('/', BrowseParentHierarchy(gameObject)
+                                    .Reverse()
+                                    .Select(item => item.name)
+                              );
         }
     }
 }

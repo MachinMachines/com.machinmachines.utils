@@ -20,202 +20,203 @@ using System.Text.RegularExpressions;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    /// <summary>
+    /// Packages versions have to be a semantic version, hence this helper class
+    /// </summary>
+    [System.Serializable]
+    public struct SemanticVersion
     {
-        // Packages versions have to be a semantic version, hence this helper class
-        [System.Serializable]
-        public struct SemanticVersion
+        public int major;
+        public int minor;
+        public int patch;
+
+        public static SemanticVersion FromString(string input)
         {
-            public int major;
-            public int minor;
-            public int patch;
+            string[] tokens = input.Split('.');
+            return new SemanticVersion { major = int.Parse(tokens[0]), minor = int.Parse(tokens[1]), patch = int.Parse(tokens[2]) };
+        }
 
-            public static SemanticVersion FromString(string input)
+        public override string ToString()
+        {
+            return $"{major}.{minor}.{patch}";
+        }
+    }
+
+    /// <summary>
+    /// Describes a package dependency as listed in the package manifest
+    /// </summary>
+    [System.Serializable]
+    public class PackageDependency
+    {
+        public string packageName;
+        public string packageVersion;
+
+        private static readonly Regex kRegex = new Regex("\"(.*)\": \"(.*)\"", RegexOptions.Compiled | RegexOptions.Singleline);
+
+        // For both functions below, let's take this as an example:
+        // {
+        //  "com.studiomanette.bob": "0.12.78",
+        //  "com.machinmachines.utils": "1.3.18",
+        //  "com.unity.timeline": "1.4.8",
+        //  "com.unity.recorder": "3.0.3"
+        // }
+
+        public static PackageDependency[] FromString(string input)
+        {
+            List<PackageDependency> result = new List<PackageDependency>();
+            if (!string.IsNullOrEmpty(input))
             {
-                string[] tokens = input.Split('.');
-                return new SemanticVersion { major = int.Parse(tokens[0]), minor = int.Parse(tokens[1]), patch = int.Parse(tokens[2]) };
+                string[] lines = input.Split('\n');
+                for (int i = 0; i < lines.Length; ++i)
+                {
+                    Match match = kRegex.Match(lines[i]);
+                    if (match.Success)
+                    {
+                        PackageDependency packageDependency = new PackageDependency
+                        {
+                            packageName = match.Groups[1].Value,
+                            packageVersion = match.Groups[2].Value
+                        };
+                        result.Add(packageDependency);
+                    }
+                }
             }
+            return result.ToArray();
+        }
 
-            public override string ToString()
+        public static string ToString(PackageDependency[] input)
+        {
+            string result = "\"dependencies\": {\n";
+            for (int i = 0; i < input.Length; ++i)
             {
-                return $"{major}.{minor}.{patch}";
+                PackageDependency packageDependency = input[i];
+                result += $"  \"{packageDependency.packageName}\": \"{packageDependency.packageVersion}\"";
+                if (i < input.Length - 1)
+                {
+                    result += ",";
+                }
+                result += "\n";
+            }
+            result += "}";
+            return result;
+        }
+    }
+
+    [System.Serializable]
+    public class PackageManifest : ScriptableObject
+    {
+        // Hiding the inherited member "name", hence this "new"
+        new public string name;
+        public string displayName;
+        // The version has to be a semantic version
+        // Custom format: private
+        [SerializeField]
+        private string version;
+        // Our own tambouille: this allows to store custom data
+        // The main use is to have a decoupling so Tupac does not need to know EVERYTHING
+        // that goes here - the sending and receiving systems are fully reponsible
+        public string additionalData;
+        // All dependencies this packages require
+        // Custom format: private, not automatically serialised - look at get/write methods
+        private string dependencies;
+
+        private static readonly Regex kDependenciesStartRegex = new Regex("^[ ]*\"dependencies\": .*$", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex kClosingBracketRegex = new Regex("^[ ]*}.*$", RegexOptions.Compiled | RegexOptions.Singleline);
+
+        public SemanticVersion SemanticVersion
+        {
+            get
+            {
+                return SemanticVersion.FromString(version);
+            }
+            set
+            {
+                version = value.ToString();
             }
         }
 
-        // Describes a package dependency as listed in the package manifest
-        [System.Serializable]
-        public class PackageDependency
+        public PackageDependency[] Dependencies
         {
-            public string packageName;
-            public string packageVersion;
-
-            private static readonly Regex kRegex = new Regex("\"(.*)\": \"(.*)\"", RegexOptions.Compiled | RegexOptions.Singleline);
-
-            // For both functions below, let's take this as an example:
-            // {
-            //  "com.studiomanette.bob": "0.12.78",
-            //  "com.machinmachines.utils": "1.3.18",
-            //  "com.unity.timeline": "1.4.8",
-            //  "com.unity.recorder": "3.0.3"
-            // }
-
-            public static PackageDependency[] FromString(string input)
+            get
             {
-                List<PackageDependency> result = new List<PackageDependency>();
-                if (!string.IsNullOrEmpty(input))
-                {
-                    string[] lines = input.Split('\n');
-                    for (int i = 0; i < lines.Length; ++i)
-                    {
-                        Match match = kRegex.Match(lines[i]);
-                        if (match.Success)
-                        {
-                            PackageDependency packageDependency = new PackageDependency
-                            {
-                                packageName = match.Groups[1].Value,
-                                packageVersion = match.Groups[2].Value
-                            };
-                            result.Add(packageDependency);
-                        }
-                    }
-                }
-                return result.ToArray();
+                return PackageDependency.FromString(dependencies);
             }
-
-            public static string ToString(PackageDependency[] input)
+            set
             {
-                string result = "\"dependencies\": {\n";
-                for (int i = 0; i < input.Length; ++i)
-                {
-                    PackageDependency packageDependency = input[i];
-                    result += $"  \"{packageDependency.packageName}\": \"{packageDependency.packageVersion}\"";
-                    if (i < input.Length - 1)
-                    {
-                        result += ",";
-                    }
-                    result += "\n";
-                }
-                result += "}";
-                return result;
+                dependencies = PackageDependency.ToString(value);
             }
         }
 
-        [System.Serializable]
-        public class PackageManifest : ScriptableObject
+        public static PackageManifest GetAtPath(string manifestPath)
         {
-            // Hiding the inherited member "name", hence this "new"
-            new public string name;
-            public string displayName;
-            // The version has to be a semantic version
-            // Custom format: private
-            [SerializeField]
-            private string version;
-            // Our own tambouille: this allows to store custom data
-            // The main use is to have a decoupling so Tupac does not need to know EVERYTHING
-            // that goes here - the sending and receiving systems are fully reponsible
-            public string additionalData;
-            // All dependencies this packages require
-            // Custom format: private, not automatically serialised - look at get/write methods
-            private string dependencies;
-
-            private static readonly Regex kDependenciesStartRegex = new Regex("^[ ]*\"dependencies\": .*$", RegexOptions.Compiled | RegexOptions.Singleline);
-            private static readonly Regex kClosingBracketRegex = new Regex("^[ ]*}.*$", RegexOptions.Compiled | RegexOptions.Singleline);
-
-            public SemanticVersion SemanticVersion
+            PackageManifest result = ScriptableObject.CreateInstance<PackageManifest>();
+            using (StreamReader stream = new StreamReader(manifestPath))
             {
-                get
+                string data = stream.ReadToEnd();
+                try
                 {
-                    return SemanticVersion.FromString(version);
+                    JsonUtility.FromJsonOverwrite(data, result);
                 }
-                set
+                catch (System.Exception exception)
                 {
-                    version = value.ToString();
+                    Debug.LogError($"PackageManifest - Error on import for {manifestPath}: exception '{exception.Message}'");
+                    return result;
                 }
-            }
-
-            public PackageDependency[] Dependencies
-            {
-                get
+                string[] lines = data.Split('\n');
+                int startLineIdx = 0;
+                int endLineIdx = 0;
+                for (int i = 0; i < lines.Length; ++i)
                 {
-                    return PackageDependency.FromString(dependencies);
-                }
-                set
-                {
-                    dependencies = PackageDependency.ToString(value);
-                }
-            }
-
-            public static PackageManifest GetAtPath(string manifestPath)
-            {
-                PackageManifest result = ScriptableObject.CreateInstance<PackageManifest>();
-                using (StreamReader stream = new StreamReader(manifestPath))
-                {
-                    string data = stream.ReadToEnd();
-                    try
+                    if (kDependenciesStartRegex.Match(lines[i]).Success)
                     {
-                        JsonUtility.FromJsonOverwrite(data, result);
-                    }
-                    catch (System.Exception exception)
-                    {
-                        Debug.LogError($"PackageManifest - Error on import for {manifestPath}: exception '{exception.Message}'");
-                        return result;
-                    }
-                    string[] lines = data.Split('\n');
-                    int startLineIdx = 0;
-                    int endLineIdx = 0;
-                    for (int i = 0; i < lines.Length; ++i)
-                    {
-                        if (kDependenciesStartRegex.Match(lines[i]).Success)
+                        startLineIdx = i;
+                        // Now look till the end of this section
+                        for (int j = i; j < lines.Length; ++j)
                         {
-                            startLineIdx = i;
-                            // Now look till the end of this section
-                            for (int j = i; j < lines.Length; ++j)
+                            if (kClosingBracketRegex.Match(lines[j]).Success)
                             {
-                                if (kClosingBracketRegex.Match(lines[j]).Success)
-                                {
-                                    endLineIdx = j + 1;
-                                    break;
-                                }
+                                endLineIdx = j + 1;
+                                break;
                             }
-                            break;
                         }
-                    }
-                    StringBuilder strBuilder = new StringBuilder();
-                    for (int i = startLineIdx; i < endLineIdx; ++i)
-                    {
-                        strBuilder.AppendLine(lines[i]);
-                    }
-                    if (strBuilder.Length > 0)
-                    {
-                        result.Dependencies = PackageDependency.FromString(strBuilder.ToString());
+                        break;
                     }
                 }
-                return result;
-            }
-
-            public void WriteAtPath(string filepath)
-            {
-                string packageStr = JsonUtility.ToJson(this, true);
-                string actualPackageStr = packageStr;
-                if (Dependencies.Length > 0)
+                StringBuilder strBuilder = new StringBuilder();
+                for (int i = startLineIdx; i < endLineIdx; ++i)
                 {
-                    // Remove the last line after checking it
-                    List<string> lines = packageStr.Split('\n').ToList();
-                    for (int i = lines.Count - 1; i > 0; --i)
-                    {
-                        if (kClosingBracketRegex.Match(lines[i]).Success)
-                        {
-                            // This is where we can insert the dependencies data
-                            lines[i - 1] += ',';
-                            lines.Insert(i, dependencies);
-                        }
-                    }
-                    actualPackageStr = string.Join('\n', lines);
+                    strBuilder.AppendLine(lines[i]);
                 }
-                File.WriteAllText(filepath, actualPackageStr);
+                if (strBuilder.Length > 0)
+                {
+                    result.Dependencies = PackageDependency.FromString(strBuilder.ToString());
+                }
             }
+            return result;
+        }
+
+        public void WriteAtPath(string filepath)
+        {
+            string packageStr = JsonUtility.ToJson(this, true);
+            string actualPackageStr = packageStr;
+            if (Dependencies.Length > 0)
+            {
+                // Remove the last line after checking it
+                List<string> lines = packageStr.Split('\n').ToList();
+                for (int i = lines.Count - 1; i > 0; --i)
+                {
+                    if (kClosingBracketRegex.Match(lines[i]).Success)
+                    {
+                        // This is where we can insert the dependencies data
+                        lines[i - 1] += ',';
+                        lines.Insert(i, dependencies);
+                    }
+                }
+                actualPackageStr = string.Join('\n', lines);
+            }
+            File.WriteAllText(filepath, actualPackageStr);
         }
     }
 }

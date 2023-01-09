@@ -16,77 +16,76 @@ using System.IO;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    /// <summary>
+    /// Stolen from Unity Recorder, which itself mentions:
+    /// Inspired from http://wiki.unity3d.com/index.php/OpenInFileBrowser
+    /// </summary>
+    public static class OpenInFileBrowser
     {
-        // Stolen from Unity Recorder, which itself mentions:
-        // Inspired from http://wiki.unity3d.com/index.php/OpenInFileBrowser
-        public static class OpenInFileBrowser
+        static void OpenInOSX(string path, bool openInsideFolder)
         {
-            static void OpenInOSX(string path, bool openInsideFolder)
+            var osxPath = path.Replace("\\", "/");
+
+            if (!osxPath.StartsWith("\""))
             {
-                var osxPath = path.Replace("\\", "/");
-
-                if (!osxPath.StartsWith("\""))
-                {
-                    osxPath = "\"" + osxPath;
-                }
-
-                if (!osxPath.EndsWith("\""))
-                {
-                    osxPath = osxPath + "\"";
-                }
-
-                var arguments = (openInsideFolder ? "" : "-R ") + osxPath;
-
-                try
-                {
-                    System.Diagnostics.Process.Start("open", arguments);
-                }
-                catch (System.ComponentModel.Win32Exception e)
-                {
-                    // tried to open mac finder in windows
-                    // just silently skip error
-                    // we currently have no platform define for the current OS we are in, so we resort to this
-                    e.HelpLink = ""; // do anything with this variable to silence warning about not using it
-                }
+                osxPath = "\"" + osxPath;
             }
 
-            static void OpenInWindows(string path, bool openInsideFolder)
+            if (!osxPath.EndsWith("\""))
             {
-                var winPath = path.Replace("/", "\\"); // windows explorer doesn't like forward slashes
-
-                try
-                {
-                    System.Diagnostics.Process.Start("explorer.exe", (openInsideFolder ? "/root," : "/select,") + winPath);
-                }
-                catch (System.ComponentModel.Win32Exception e)
-                {
-                    // tried to open win explorer in mac
-                    // just silently skip error
-                    // we currently have no platform define for the current OS we are in, so we resort to this
-                    e.HelpLink = ""; // do anything with this variable to silence warning about not using it
-                }
+                osxPath = osxPath + "\"";
             }
 
-            public static void Open(string path)
+            var arguments = (openInsideFolder ? "" : "-R ") + osxPath;
+
+            try
             {
-                if (!string.IsNullOrEmpty(path))
+                System.Diagnostics.Process.Start("open", arguments);
+            }
+            catch (System.ComponentModel.Win32Exception e)
+            {
+                // tried to open mac finder in windows
+                // just silently skip error
+                // we currently have no platform define for the current OS we are in, so we resort to this
+                e.HelpLink = ""; // do anything with this variable to silence warning about not using it
+            }
+        }
+
+        static void OpenInWindows(string path, bool openInsideFolder)
+        {
+            var winPath = path.Replace("/", "\\"); // windows explorer doesn't like forward slashes
+
+            try
+            {
+                System.Diagnostics.Process.Start("explorer.exe", (openInsideFolder ? "/root," : "/select,") + winPath);
+            }
+            catch (System.ComponentModel.Win32Exception e)
+            {
+                // tried to open win explorer in mac
+                // just silently skip error
+                // we currently have no platform define for the current OS we are in, so we resort to this
+                e.HelpLink = ""; // do anything with this variable to silence warning about not using it
+            }
+        }
+
+        public static void Open(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                if (!File.Exists(path))
+                    path = Path.GetDirectoryName(path);
+
+                var openInsideFolder = Directory.Exists(path);
+
+                if (Application.platform == RuntimePlatform.WindowsEditor)
                 {
-                    if (!File.Exists(path))
-                        path = Path.GetDirectoryName(path);
-
-                    var openInsideFolder = Directory.Exists(path);
-
-                    if (Application.platform == RuntimePlatform.WindowsEditor)
-                    {
-                        OpenInWindows(path, openInsideFolder);
-                    }
-                    else if (Application.platform == RuntimePlatform.OSXEditor)
-                    {
-                        OpenInOSX(path, openInsideFolder);
-                    }
+                    OpenInWindows(path, openInsideFolder);
+                }
+                else if (Application.platform == RuntimePlatform.OSXEditor)
+                {
+                    OpenInOSX(path, openInsideFolder);
                 }
             }
         }

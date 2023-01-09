@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,19 +45,30 @@ namespace MachinMachines.Algorithms
         }
     }
 
-    // Super basic class for organising data as a hierarchical tree
-    // Only useful as inheriting classes can then be automatically dumped as DGML
+    /// <summary>
+    /// Super basic class for organising data as a hierarchical tree 
+    /// Only useful as inheriting classes can then be automatically dumped as DGML
+    /// </summary>
     public abstract class HierarchicalTreeItem<T> where T : class
     {
-        // To be overridden by inheriting classes
+        /// <summary>
+        /// To be overridden by inheriting classes
+        /// </summary>
         public abstract string Name { get; }
-        // (optional) To be overridden by inheriting classes if need be
+        /// <summary>
+        /// (optional) To be overridden by inheriting classes if need be
+        /// </summary>
         public virtual string Category { get { return ""; } }
-        // (optional) To be overridden by inheriting classes if need be
+        /// <summary>
+        /// (optional) To be overridden by inheriting classes if need be
+        /// </summary>
         public virtual Dictionary<string, Color> CategoryToColorMapping { get { return null; } }
 
         public HierarchicalTreeItem<T>[] children = new HierarchicalTreeItem<T>[0];
-        // Same as the above but with the correct derived type
+
+        /// <summary>
+        /// Same as the above but with the correct derived type
+        /// </summary>
         public IEnumerable<T> DirectChildren
         {
             get
@@ -67,7 +77,9 @@ namespace MachinMachines.Algorithms
             }
         }
 
-        // Generator retrieving all children items, including the root one, as a flattened list
+        /// <summary>
+        /// Generator retrieving all children items, including the root one, as a flattened list
+        /// </summary>
         public IEnumerable<T> GetAllItems_r()
         {
             yield return this as T;
@@ -80,7 +92,9 @@ namespace MachinMachines.Algorithms
             }
         }
 
-        // Build a list of all "links" (dependency relationship) between all resources recursively
+        /// <summary>
+        /// Build a list of all "links" (dependency relationship) between all resources recursively
+        /// </summary>
         public static IEnumerable<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> ConstructLinks_r(HierarchicalTreeItem<T> root)
         {
             HashSet<(HierarchicalTreeItem<T>, HierarchicalTreeItem<T>)> result = new(
