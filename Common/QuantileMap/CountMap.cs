@@ -85,9 +85,9 @@ namespace MachinMachines
                 }
                 if (bucketIdx == kBucketsCount - 1)
                 {
-                    return $">{(int)Math.Pow(2.0, kHigherBucketIndex)}";
+                    return $">{(int)Math.Pow(2.0, kHigherBucketIndex + 1)}";
                 }
-                return $"Between {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)} and {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex + 1)}";
+                return $"From {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex)} to {(int)Math.Pow(2.0, bucketIdx + kLowerBucketIndex + 1) - 1}";
             }
 
             protected override string GetItemFilePath(string item)
