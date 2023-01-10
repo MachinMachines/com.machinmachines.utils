@@ -18,44 +18,41 @@ using MachinMachines.Utils;
 
 using UnityEditor;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    public class FileSizeMapPropertyDrawer : QuantileMapPropertyDrawer
     {
-        public class FileSizeMapPropertyDrawer : QuantileMapPropertyDrawer
+        private const int kMaxItemsDisplayCount = 16;
+
+        protected override void OnDrawGeneralMapGUI(SerializedProperty mapProperty)
         {
-            private const int kMaxItemsDisplayCount = 16;
-
-            protected override void OnDrawGeneralMapGUI(SerializedProperty mapProperty)
+            using (new EditorGUI.DisabledGroupScope(true))
             {
-                using (new EditorGUI.DisabledGroupScope(true))
-                {
-                    EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalSizeBytes"));
-                    EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalItemsCount"));
-                }
+                EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalSizeBytes"));
+                EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalItemsCount"));
             }
+        }
 
-            protected override void OnDrawBucketGUI(SerializedProperty bucketProperty)
+        protected override void OnDrawBucketGUI(SerializedProperty bucketProperty)
+        {
+            SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
+            SerializedProperty serializedPropertySize = bucketProperty.FindPropertyRelative("Size");
+            SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
+            string sizeDisplay = MemorySizeUnit.DisplayByteSize(serializedPropertySize.longValue, 1);
+            string header = $"{serializedPropertyName.stringValue}px - {serializedPropertyFiles.arraySize} item(s) - {sizeDisplay}";
+            if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
             {
-                SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
-                SerializedProperty serializedPropertySize = bucketProperty.FindPropertyRelative("Size");
-                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
-                string sizeDisplay = MemorySizeUnit.DisplayByteSize(serializedPropertySize.longValue, 1);
-                string header = $"{serializedPropertyName.stringValue}px - {serializedPropertyFiles.arraySize} item(s) - {sizeDisplay}";
-                if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
+                //EditorGUILayout.BeginVertical();
+                //EditorGUI.indentLevel += 1;
+                for (int fileIdx = 0; fileIdx < Math.Min(serializedPropertyFiles.arraySize, kMaxItemsDisplayCount); ++fileIdx)
                 {
-                    //EditorGUILayout.BeginVertical();
-                    //EditorGUI.indentLevel += 1;
-                    for (int fileIdx = 0; fileIdx < Math.Min(serializedPropertyFiles.arraySize, kMaxItemsDisplayCount); ++fileIdx)
-                    {
-                        EditorGUILayout.LabelField(serializedPropertyFiles.GetArrayElementAtIndex(fileIdx).stringValue);
-                    }
-                    //EditorGUI.indentLevel -= 1;
-                    //EditorGUILayout.EndVertical();
-                    if (serializedPropertyFiles.arraySize > kMaxItemsDisplayCount)
-                    {
-                        EditorGUILayout.LabelField($"Items count >{kMaxItemsDisplayCount}, skipped some", EditorStyles.boldLabel);
-                    }
+                    EditorGUILayout.LabelField(serializedPropertyFiles.GetArrayElementAtIndex(fileIdx).stringValue);
+                }
+                //EditorGUI.indentLevel -= 1;
+                //EditorGUILayout.EndVertical();
+                if (serializedPropertyFiles.arraySize > kMaxItemsDisplayCount)
+                {
+                    EditorGUILayout.LabelField($"Items count >{kMaxItemsDisplayCount}, skipped some", EditorStyles.boldLabel);
                 }
             }
         }

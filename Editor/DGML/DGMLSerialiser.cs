@@ -23,7 +23,9 @@ using UnityEngine;
 
 namespace MachinMachines.DGML
 {
-    // Extension for inheriting classes to be automatically dumped as DGML
+    /// <summary>
+    /// Extension for inheriting classes to be automatically dumped as DGML
+    /// </summary>
     public static class HierarchicalTreeItemExtension
     {
         public static DirectedGraph GenerateDirectedGraph<T>(this HierarchicalTreeItem<T> hierarchicalTreeItem) where T : class
@@ -72,8 +74,10 @@ namespace MachinMachines.DGML
         }
     }
 
-    // A simple helper so we can consider two DGML nodes are equal
-    // as long as they have "equivalent" names (equal whatever the case)
+    /// <summary>
+    /// A simple helper so we can consider two DGML nodes are equal
+    /// as long as they have "equivalent" names (equal whatever the case)
+    /// </summary>
     public class DGMLNodeComparer : IEqualityComparer<DGMLNode>
     {
         public bool Equals(DGMLNode lhs, DGMLNode rhs)

@@ -20,73 +20,73 @@ using UnityEditor.Build.Reporting;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils.Settings
 {
-    namespace Utils
+    /// <summary>
+    /// Just a plain and stupid way to store file paths for settings we are interested to copy over
+    /// Notice that editor settings are not in there
+    /// Also, if ever a new settings class is being created, you will need to add it here manually
+    /// </summary>
+    public static class SettingsPaths
     {
-        namespace Settings
-        {
-            // Just a plain and stupid way to store file paths for settings we are interested to copy over
-            // Notice that editor settings are not in there
-            // Also, if ever a new settings class is being created, you will need to add it here manually
-            public static class SettingsPaths
-            {
-                internal static readonly (string, string)[] s_Paths = new (string, string)[] {
+        internal static readonly (string, string)[] s_Paths = new (string, string)[] {
                 };
-            }
+    }
 
-            // Prebuild step to make sure default assets are copied to StreamingAssets/
-            public class SettingsPreBuild : IPreprocessBuildWithReport
+    /// <summary>
+    /// Prebuild step to make sure default assets are copied to StreamingAssets/
+    /// </summary>
+    public class SettingsPreBuild : IPreprocessBuildWithReport
+    {
+        public int callbackOrder { get { return 0; } }
+
+        void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
+        {
+            try
             {
-                public int callbackOrder { get { return 0; } }
-
-                void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
+                if (!Directory.Exists(Application.streamingAssetsPath))
                 {
-                    try
+                    Directory.CreateDirectory(Application.streamingAssetsPath);
+                }
+                foreach ((string editorPath, string runtimePath) in SettingsPaths.s_Paths)
+                {
+                    string destFolder = Path.GetDirectoryName(runtimePath);
+                    if (!Directory.Exists(destFolder))
                     {
-                        if (!Directory.Exists(Application.streamingAssetsPath))
-                        {
-                            Directory.CreateDirectory(Application.streamingAssetsPath);
-                        }
-                        foreach ((string editorPath, string runtimePath) in SettingsPaths.s_Paths)
-                        {
-                            string destFolder = Path.GetDirectoryName(runtimePath);
-                            if (!Directory.Exists(destFolder))
-                            {
-                                Directory.CreateDirectory(destFolder);
-                            }
-                            File.Copy(editorPath, runtimePath, true);
-                        }
+                        Directory.CreateDirectory(destFolder);
                     }
-                    catch (Exception e)
+                    File.Copy(editorPath, runtimePath, true);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Something went wrong when copying settings paths: {e.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Postbuild step to make sure StreamingAssets is being emptied
+    /// </summary>
+    public class SettingsPostBuild : IPostprocessBuildWithReport
+    {
+        public int callbackOrder { get { return 0; } }
+
+        void IPostprocessBuildWithReport.OnPostprocessBuild(BuildReport report)
+        {
+            try
+            {
+                foreach ((string _, string runtimePath) in SettingsPaths.s_Paths)
+                {
+                    if (File.Exists(runtimePath))
                     {
-                        Debug.LogError($"Something went wrong when copying settings paths: {e.Message}");
+                        File.Delete(runtimePath);
                     }
                 }
             }
-
-            // Postbuild step to make sure StreamingAssets is being emptied
-            public class SettingsPostBuild : IPostprocessBuildWithReport
+            catch (Exception e)
             {
-                public int callbackOrder { get { return 0; } }
-
-                void IPostprocessBuildWithReport.OnPostprocessBuild(BuildReport report)
-                {
-                    try
-                    {
-                        foreach ((string _, string runtimePath) in SettingsPaths.s_Paths)
-                        {
-                            if (File.Exists(runtimePath))
-                            {
-                                File.Delete(runtimePath);
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"Something went wrong when deleting StreamingAssets directory after the build: {e.Message}");
-                    }
-                }
+                Debug.LogError($"Something went wrong when deleting StreamingAssets directory after the build: {e.Message}");
             }
         }
     }

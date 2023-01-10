@@ -16,59 +16,56 @@ using UnityEditor;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    public abstract class QuantileMapPropertyDrawer : PropertyDrawer
     {
-        public abstract class QuantileMapPropertyDrawer : PropertyDrawer
+        protected static GUIStyle BucketHeaderStyle
         {
-            protected static GUIStyle BucketHeaderStyle
+            get
             {
-                get
+                if (s_BucketHeaderStyle == null)
                 {
-                    if (s_BucketHeaderStyle == null)
+                    s_BucketHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
                     {
-                        s_BucketHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-                        {
-                            clipping = TextClipping.Overflow
-                        };
-                    }
-                    return s_BucketHeaderStyle;
+                        clipping = TextClipping.Overflow
+                    };
                 }
+                return s_BucketHeaderStyle;
             }
-
-            private static GUIStyle s_BucketHeaderStyle;
-            private bool _foldout = false;
-            private Vector2 _scrollPosition = new Vector2();
-
-            public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-            {
-                EditorGUI.BeginProperty(position, label, property);
-
-                _foldout = EditorGUI.Foldout(position, _foldout, property.displayName);
-                if (_foldout)
-                {
-                    EditorGUI.indentLevel += 1;
-                    OnDrawGeneralMapGUI(property);
-                    SerializedProperty sizeMapProps = property.FindPropertyRelative("Buckets");
-                    int bucketsCount = sizeMapProps.arraySize;
-                    using (EditorGUILayout.ScrollViewScope scope = new EditorGUILayout.ScrollViewScope(_scrollPosition))
-                    {
-                        for (int bucketIdx = 0; bucketIdx < bucketsCount; ++bucketIdx)
-                        {
-                            SerializedProperty bucketItemProp = sizeMapProps.GetArrayElementAtIndex(bucketIdx);
-                            OnDrawBucketGUI(bucketItemProp);
-                        }
-                        _scrollPosition = scope.scrollPosition;
-                    }
-                    EditorGUI.indentLevel -= 1;
-                }
-
-                EditorGUI.EndProperty();
-            }
-
-            protected abstract void OnDrawGeneralMapGUI(SerializedProperty mapProperty);
-            protected abstract void OnDrawBucketGUI(SerializedProperty bucketProperty);
         }
+
+        private static GUIStyle s_BucketHeaderStyle;
+        private bool _foldout = false;
+        private Vector2 _scrollPosition = new Vector2();
+
+        public override sealed void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            _foldout = EditorGUI.Foldout(position, _foldout, property.displayName);
+            if (_foldout)
+            {
+                EditorGUI.indentLevel += 1;
+                OnDrawGeneralMapGUI(property);
+                SerializedProperty sizeMapProps = property.FindPropertyRelative("Buckets");
+                int bucketsCount = sizeMapProps.arraySize;
+                using (EditorGUILayout.ScrollViewScope scope = new EditorGUILayout.ScrollViewScope(_scrollPosition))
+                {
+                    for (int bucketIdx = 0; bucketIdx < bucketsCount; ++bucketIdx)
+                    {
+                        SerializedProperty bucketItemProp = sizeMapProps.GetArrayElementAtIndex(bucketIdx);
+                        OnDrawBucketGUI(bucketItemProp);
+                    }
+                    _scrollPosition = scope.scrollPosition;
+                }
+                EditorGUI.indentLevel -= 1;
+            }
+
+            EditorGUI.EndProperty();
+        }
+
+        protected abstract void OnDrawGeneralMapGUI(SerializedProperty mapProperty);
+        protected abstract void OnDrawBucketGUI(SerializedProperty bucketProperty);
     }
 }

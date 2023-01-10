@@ -18,38 +18,34 @@ using UnityEditor.AssetImporters;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Common.Repository
 {
-    namespace Common
+    /// <summary>
+    /// Import repository asset and notify the global manager for this new object
+    /// </summary>
+    [ScriptedImporter(1, ".filesrepository")]
+    public class FilesRepositoryImporter : ScriptedImporter
     {
-        namespace Repository
+        public override void OnImportAsset(AssetImportContext ctx)
         {
-            // Import repository asset and notify the global manager for this new object
-            [ScriptedImporter(1, ".filesrepository")]
-            public class FilesRepositoryImporter : ScriptedImporter
+            using (StreamReader stream = new StreamReader(ctx.assetPath))
             {
-                public override void OnImportAsset(AssetImportContext ctx)
+                // Serialisation from JSON
+                FilesRepository data = FilesRepository.CreateInstance<FilesRepository>();
+                try
                 {
-                    using (StreamReader stream = new StreamReader(ctx.assetPath))
-                    {
-                        // Serialisation from JSON
-                        FilesRepository data = FilesRepository.CreateInstance<FilesRepository>();
-                        try
-                        {
-                            JsonUtility.FromJsonOverwrite(stream.ReadToEnd(), data);
-                        }
-                        catch (System.Exception e)
-                        {
-                            Debug.LogError(e.ToString());
-                        }
-                        if (data != null)
-                        {
-                            ctx.AddObjectToAsset("data", data);
-                            ctx.SetMainObject(data);
-                            // Notify global manager
-                            FilesRepositoryManager.Instance.AddRepository(data);
-                        }
-                    }
+                    JsonUtility.FromJsonOverwrite(stream.ReadToEnd(), data);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError(e.ToString());
+                }
+                if (data != null)
+                {
+                    ctx.AddObjectToAsset("data", data);
+                    ctx.SetMainObject(data);
+                    // Notify global manager
+                    FilesRepositoryManager.Instance.AddRepository(data);
                 }
             }
         }

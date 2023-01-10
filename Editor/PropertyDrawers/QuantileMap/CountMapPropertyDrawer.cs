@@ -16,42 +16,39 @@ using System;
 
 using UnityEditor;
 
-namespace MachinMachines
+namespace MachinMachines.Quantile
 {
-    namespace Quantile
+    [CustomPropertyDrawer(typeof(CountMap))]
+    public class CountMapPropertyDrawer : QuantileMapPropertyDrawer
     {
-        [CustomPropertyDrawer(typeof(CountMap))]
-        public class CountMapPropertyDrawer : QuantileMapPropertyDrawer
+        private const int kMaxItemsDisplayCount = 16;
+
+        protected override void OnDrawGeneralMapGUI(SerializedProperty mapProperty)
         {
-            private const int kMaxItemsDisplayCount = 16;
-
-            protected override void OnDrawGeneralMapGUI(SerializedProperty mapProperty)
+            using (new EditorGUI.DisabledGroupScope(true))
             {
-                using (new EditorGUI.DisabledGroupScope(true))
-                {
-                    EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalItemsCount"));
-                }
+                EditorGUILayout.PropertyField(mapProperty.FindPropertyRelative("TotalItemsCount"));
             }
+        }
 
-            protected override void OnDrawBucketGUI(SerializedProperty bucketProperty)
+        protected override void OnDrawBucketGUI(SerializedProperty bucketProperty)
+        {
+            SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
+            SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
+            string header = $"{serializedPropertyName.stringValue}refs - {serializedPropertyFiles.arraySize} item(s)";
+            if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
             {
-                SerializedProperty serializedPropertyName = bucketProperty.FindPropertyRelative("Name");
-                SerializedProperty serializedPropertyFiles = bucketProperty.FindPropertyRelative("Items");
-                string header = $"{serializedPropertyName.stringValue}refs - {serializedPropertyFiles.arraySize} item(s)";
-                if (EditorGUILayout.Foldout(serializedPropertyFiles.arraySize > 0, header, BucketHeaderStyle))
+                //EditorGUILayout.BeginVertical();
+                //EditorGUI.indentLevel += 1;
+                for (int fileIdx = 0; fileIdx < Math.Min(serializedPropertyFiles.arraySize, kMaxItemsDisplayCount); ++fileIdx)
                 {
-                    //EditorGUILayout.BeginVertical();
-                    //EditorGUI.indentLevel += 1;
-                    for (int fileIdx = 0; fileIdx < Math.Min(serializedPropertyFiles.arraySize, kMaxItemsDisplayCount); ++fileIdx)
-                    {
-                        EditorGUILayout.LabelField(serializedPropertyFiles.GetArrayElementAtIndex(fileIdx).stringValue);
-                    }
-                    //EditorGUI.indentLevel -= 1;
-                    //EditorGUILayout.EndVertical();
-                    if (serializedPropertyFiles.arraySize > kMaxItemsDisplayCount)
-                    {
-                        EditorGUILayout.LabelField($"Items count >{kMaxItemsDisplayCount}, skipped some", EditorStyles.boldLabel);
-                    }
+                    EditorGUILayout.LabelField(serializedPropertyFiles.GetArrayElementAtIndex(fileIdx).stringValue);
+                }
+                //EditorGUI.indentLevel -= 1;
+                //EditorGUILayout.EndVertical();
+                if (serializedPropertyFiles.arraySize > kMaxItemsDisplayCount)
+                {
+                    EditorGUILayout.LabelField($"Items count >{kMaxItemsDisplayCount}, skipped some", EditorStyles.boldLabel);
                 }
             }
         }

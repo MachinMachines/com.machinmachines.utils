@@ -16,31 +16,30 @@ using UnityEditor;
 
 using UnityEngine;
 
-namespace MachinMachines
+namespace MachinMachines.Utils
 {
-    namespace Utils
+    /// <summary>
+    /// Custom drawer for memory size fields, displaying with the required unit
+    /// </summary>
+    [CustomPropertyDrawer(typeof(IsMemorySizeUnitAttribute))]
+    public class IsMemorySizeUnitPropertyDrawer : PropertyDrawer
     {
-        // Custom drawer for memory size fields, displaying with the required unit
-        [CustomPropertyDrawer(typeof(IsMemorySizeUnitAttribute))]
-        public class IsMemorySizeUnitPropertyDrawer : PropertyDrawer
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+            label = EditorGUI.BeginProperty(position, label, property);
+
+            EditorGUI.BeginDisabledGroup(true);
+            using (new GUILayout.HorizontalScope())
             {
-                label = EditorGUI.BeginProperty(position, label, property);
-
-                EditorGUI.BeginDisabledGroup(true);
-                using (new GUILayout.HorizontalScope())
-                {
-                    string valueDisplay = MemorySizeUnit.DisplayByteSize(property.longValue, 1);
-                    Rect labelRect = new Rect(position.x, position.y, position.width / 4, position.height);
-                    EditorGUI.LabelField(labelRect, label);
-                    Rect valueRect = new Rect(position.x + position.width / 4, position.y, position.width / 4, position.height);
-                    EditorGUI.LabelField(valueRect, valueDisplay);
-                }
-                EditorGUI.EndDisabledGroup();
-
-                EditorGUI.EndProperty();
+                string valueDisplay = MemorySizeUnit.DisplayByteSize(property.longValue, 1);
+                Rect labelRect = new Rect(position.x, position.y, position.width / 4, position.height);
+                EditorGUI.LabelField(labelRect, label);
+                Rect valueRect = new Rect(position.x + position.width / 4, position.y, position.width / 4, position.height);
+                EditorGUI.LabelField(valueRect, valueDisplay);
             }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.EndProperty();
         }
     }
 }
