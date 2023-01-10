@@ -206,7 +206,7 @@ namespace MachinMachines.Common.Repository
         /// </summary>
         static public bool PathIsInEditor(string path)
         {
-            return Paths.PathStartsWith(path, "Assets/") || Paths.PathStartsWith(path, "Packages/");
+            return Paths.PathStartsWith(path, "Assets") || Paths.PathStartsWith(path, "Packages");
         }
 
         /// <summary>
